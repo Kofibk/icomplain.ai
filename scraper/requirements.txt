@@ -1,0 +1,21 @@
+# FOS Decision Scraper Dependencies
+
+# Web scraping
+aiohttp>=3.9.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+
+# Data processing
+pandas>=2.0.0
+
+# Embeddings (optional - choose one)
+openai>=1.0.0
+# voyageai>=0.2.0
+
+# Utilities
+python-dotenv>=1.0.0
+tqdm>=4.66.0
+
+# Database (for direct insertion)
+supabase>=2.0.0
+psycopg2-binary>=2.9.0
