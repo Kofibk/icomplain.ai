@@ -1,264 +1,300 @@
+'use client'
+
 import Link from 'next/link'
-import { Shield, FileText, PoundSterling, Clock, CheckCircle, ArrowRight } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowRight, Check, Shield, Clock, ChevronDown, Star } from 'lucide-react'
 
 const complaintTypes = [
   {
     id: 'pcp',
-    title: 'PCP / Motor Finance',
-    description: 'Hidden commission on car finance? You could be owed £700+ per agreement.',
+    title: 'Car Finance (PCP)',
+    description: 'Hidden commission claims',
+    amount: '£700 - £4,000',
     icon: '🚗',
-    popular: true,
+    time: '8 mins',
   },
   {
     id: 'section75',
-    title: 'Section 75 Credit Card',
-    description: 'Goods not delivered, faulty, or company gone bust? Your card provider is liable.',
+    title: 'Credit Card',
+    description: 'Section 75 claims',
+    amount: '£100 - £30,000',
     icon: '💳',
-    popular: false,
+    time: '6 mins',
   },
   {
     id: 'unaffordable',
     title: 'Unaffordable Lending',
-    description: 'Credit cards or loans you couldn\'t afford? Lenders must check affordability.',
+    description: 'Loans & credit you couldn\'t afford',
+    amount: '£500 - £10,000',
     icon: '📊',
-    popular: true,
+    time: '7 mins',
   },
   {
     id: 'holiday-park',
-    title: 'Holiday Park Mis-selling',
-    description: 'Promised rental income that never materialised? You may have been mis-sold.',
+    title: 'Holiday Park',
+    description: 'Timeshare & holiday park mis-selling',
+    amount: '£2,000 - £50,000',
     icon: '🏕️',
-    popular: false,
+    time: '10 mins',
   },
 ]
 
-const pricingTiers = [
-  { value: '£1,000', price: '£29', label: 'Claims up to £1,000' },
-  { value: '£3,000', price: '£49', label: 'Claims £1,000 - £3,000' },
-  { value: '£10,000', price: '£79', label: 'Claims £3,000 - £10,000' },
-  { value: '£10,000+', price: '£129', label: 'Claims over £10,000' },
+const steps = [
+  { num: '1', title: 'Answer questions', desc: 'About your complaint' },
+  { num: '2', title: 'AI writes letter', desc: 'Professional & effective' },
+  { num: '3', title: 'Send it yourself', desc: 'Keep 100% of compensation' },
 ]
 
-const benefits = [
+const faqs = [
   {
-    icon: FileText,
-    title: 'Ombudsman-Quality Letters',
-    description: 'Our AI is trained on 170,000+ Financial Ombudsman decisions. It knows exactly what language and arguments succeed.',
+    q: 'Is this a claims company?',
+    a: 'No. We\'re a document preparation service. You send the letter yourself and keep 100% of any compensation. Claims companies take 25-40%.',
   },
   {
-    icon: PoundSterling,
-    title: 'Keep 100% of Your Compensation',
-    description: 'Unlike claims companies that take 25-40%, you keep everything you recover. One small fee, no hidden charges.',
+    q: 'How does the AI know what to write?',
+    a: 'Our AI is trained on Financial Ombudsman decisions. It knows the exact arguments and language that lead to successful complaints.',
   },
   {
-    icon: Clock,
-    title: 'Ready in Minutes',
-    description: 'Answer a few questions, pay once, and download your professional complaint letter instantly.',
+    q: 'What if my complaint is rejected?',
+    a: 'You can escalate to the Financial Ombudsman Service for free. We can generate an escalation letter for £19.',
   },
   {
-    icon: Shield,
-    title: 'Evidence Checklist Included',
-    description: 'We tell you exactly what documents to attach. Complete complaints have higher success rates.',
+    q: 'Is my data secure?',
+    a: 'Yes. We use bank-level encryption and delete your data after 30 days.',
   },
 ]
 
 export default function HomePage() {
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-brand-600">ComplaintAI</span>
-            </div>
-            <nav className="hidden md:flex space-x-8">
-              <a href="#how-it-works" className="text-gray-600 hover:text-gray-900">How It Works</a>
-              <a href="#pricing" className="text-gray-600 hover:text-gray-900">Pricing</a>
-              <a href="#faq" className="text-gray-600 hover:text-gray-900">FAQ</a>
-            </nav>
+    <div className="min-h-screen bg-white">
+      {/* Nav */}
+      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-lg z-50 border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <span className="text-xl font-semibold text-gray-900">ComplaintAI</span>
+          <div className="flex items-center gap-6">
+            <a href="#how" className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block">How it works</a>
+            <a href="#pricing" className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block">Pricing</a>
+            <Link 
+              href="/questionnaire" 
+              className="bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-full hover:bg-gray-800 transition-colors"
+            >
+              Start claim
+            </Link>
           </div>
         </div>
-      </header>
+      </nav>
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-b from-brand-50 to-white py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-              Write Professional Complaint Letters That Get Results
-            </h1>
-            <p className="text-xl text-gray-600 mb-8">
-              Our AI is trained on 170,000+ Financial Ombudsman decisions. 
-              Generate complaint letters that use the exact language and arguments that succeed.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/questionnaire" className="btn-primary flex items-center justify-center gap-2">
-                Start Your Complaint
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <a href="#how-it-works" className="btn-secondary">
-                See How It Works
-              </a>
-            </div>
-            <p className="mt-6 text-sm text-gray-500">
-              No account needed • From £29 • Letter ready in minutes
-            </p>
+      {/* Hero */}
+      <section className="pt-32 pb-16 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-sm font-medium px-4 py-2 rounded-full mb-8">
+            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+            170,000+ FOS decisions analysed
+          </div>
+          
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-gray-900 tracking-tight mb-6">
+            Get the compensation you're owed
+          </h1>
+          
+          <p className="text-lg sm:text-xl text-gray-500 mb-10 max-w-2xl mx-auto">
+            AI-powered complaint letters that use the exact language the Financial Ombudsman responds to. Ready in minutes.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            <Link 
+              href="/questionnaire" 
+              className="inline-flex items-center justify-center gap-2 bg-gray-900 text-white font-medium px-8 py-4 rounded-full hover:bg-gray-800 transition-all hover:scale-105"
+            >
+              Start your complaint
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+          </div>
+
+          <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
+            <span className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              No account needed
+            </span>
+            <span className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              From £29
+            </span>
+            <span className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              Keep 100%
+            </span>
           </div>
         </div>
       </section>
 
       {/* Complaint Types */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
-            What Type of Complaint Do You Have?
+      <section className="py-16 px-4 bg-gray-50">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 text-center mb-4">
+            What's your complaint about?
           </h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            Select your complaint type to get started. We'll guide you through the process.
+          <p className="text-gray-500 text-center mb-10">
+            Select your complaint type to get started
           </p>
-          
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+
+          <div className="grid sm:grid-cols-2 gap-4">
             {complaintTypes.map((type) => (
               <Link
                 key={type.id}
                 href={`/questionnaire?type=${type.id}`}
-                className="card hover:shadow-md hover:border-brand-300 transition-all group relative"
+                className="group bg-white rounded-2xl p-6 border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all"
               >
-                {type.popular && (
-                  <span className="absolute -top-3 right-4 bg-brand-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                    Popular
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-3xl">{type.icon}</span>
+                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+                    {type.time}
                   </span>
-                )}
-                <div className="flex items-start gap-4">
-                  <span className="text-4xl">{type.icon}</span>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">
-                      {type.title}
-                    </h3>
-                    <p className="text-gray-600 mt-1">{type.description}</p>
-                  </div>
                 </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-emerald-600 transition-colors">
+                  {type.title}
+                </h3>
+                <p className="text-sm text-gray-500 mb-3">{type.description}</p>
+                <p className="text-sm font-medium text-emerald-600">
+                  Typical claim: {type.amount}
+                </p>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            How It Works
-          </h2>
-          
-          <div className="grid md:grid-cols-4 gap-8">
-            {[
-              { step: 1, title: 'Answer Questions', desc: 'Tell us about your complaint in 5-10 minutes' },
-              { step: 2, title: 'AI Generates Letter', desc: 'We create an ombudsman-quality complaint' },
-              { step: 3, title: 'Pay & Download', desc: 'One-time payment, instant PDF download' },
-              { step: 4, title: 'Submit Yourself', desc: 'Send to the business, keep 100% of any compensation' },
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="w-12 h-12 bg-brand-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
-                  {item.step}
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-gray-600 text-sm">{item.desc}</p>
+      {/* Social Proof */}
+      <section className="py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 sm:p-12 text-white">
+            <div className="flex items-center gap-1 mb-4">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+              ))}
+            </div>
+            <blockquote className="text-xl sm:text-2xl font-medium mb-6">
+              "Got £1,200 back from my car finance company. The letter was incredibly professional - 
+              they didn't even try to reject it."
+            </blockquote>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-sm font-medium">
+                JT
               </div>
-            ))}
+              <div>
+                <p className="font-medium">James T.</p>
+                <p className="text-sm text-gray-400">PCP Commission Claim</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Benefits */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Why Use ComplaintAI?
+      {/* How It Works */}
+      <section id="how" className="py-16 px-4 bg-gray-50">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 text-center mb-12">
+            How it works
           </h2>
-          
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {benefits.map((benefit, idx) => (
-              <div key={idx} className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center">
-                    <benefit.icon className="w-6 h-6 text-brand-600" />
-                  </div>
+
+          <div className="grid sm:grid-cols-3 gap-8">
+            {steps.map((step, i) => (
+              <div key={i} className="text-center">
+                <div className="w-12 h-12 bg-gray-900 text-white rounded-full flex items-center justify-center text-lg font-semibold mx-auto mb-4">
+                  {step.num}
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{benefit.title}</h3>
-                  <p className="text-gray-600">{benefit.description}</p>
-                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">{step.title}</h3>
+                <p className="text-sm text-gray-500">{step.desc}</p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-12 bg-white rounded-2xl p-6 border border-gray-200">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">You stay in control</p>
+                  <p className="text-sm text-gray-500">We never contact lenders on your behalf</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Ready in minutes</p>
+                  <p className="text-sm text-gray-500">Download instantly after payment</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
-            Simple, Transparent Pricing
+      <section id="pricing" className="py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 text-center mb-4">
+            Simple pricing
           </h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            One payment. No percentage of your compensation. No hidden fees.
+          <p className="text-gray-500 text-center mb-10">
+            One payment. Keep 100% of your compensation.
           </p>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            {pricingTiers.map((tier, idx) => (
-              <div key={idx} className="card text-center">
-                <p className="text-sm text-gray-600 mb-2">{tier.label}</p>
-                <p className="text-3xl font-bold text-gray-900 mb-4">{tier.price}</p>
-                <p className="text-xs text-gray-500">One-time payment</p>
+
+          <div className="grid sm:grid-cols-4 gap-4 mb-8">
+            {[
+              { range: 'Up to £1k', price: '£29' },
+              { range: '£1k - £3k', price: '£49' },
+              { range: '£3k - £10k', price: '£79' },
+              { range: 'Over £10k', price: '£129' },
+            ].map((tier, i) => (
+              <div key={i} className="bg-gray-50 rounded-2xl p-6 text-center">
+                <p className="text-sm text-gray-500 mb-2">{tier.range}</p>
+                <p className="text-2xl font-semibold text-gray-900">{tier.price}</p>
               </div>
             ))}
           </div>
-          
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-600">
-              Compare: Claims companies typically charge <span className="font-semibold">25-40%</span> of your compensation.
-              <br />
-              On a £1,000 claim, that's £250-400. With us, you pay just £29-49 and keep the rest.
+
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
+            <p className="text-amber-800">
+              <span className="font-semibold">Claims companies charge 25-40%.</span>
+              {' '}On a £1,000 claim, that's £250-400. With us, you pay £29-49.
             </p>
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="py-16 bg-white">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Frequently Asked Questions
+      <section className="py-16 px-4 bg-gray-50">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 text-center mb-10">
+            Questions?
           </h2>
-          
-          <div className="space-y-6">
-            {[
-              {
-                q: 'Is this a claims management company?',
-                a: 'No. We are a document preparation service. We help you write your own complaint letter - we don\'t submit it for you or act on your behalf. You send the letter yourself and keep 100% of any compensation.',
-              },
-              {
-                q: 'Do I need to use a claims company?',
-                a: 'No. You can complain directly to businesses and the Financial Ombudsman Service for free. Our tool simply helps you write a more professional, effective complaint letter.',
-              },
-              {
-                q: 'How does the AI know what to write?',
-                a: 'Our AI is trained on 170,000+ published Financial Ombudsman decisions. It has learned the exact language, legal references, and argument structures that lead to successful complaints.',
-              },
-              {
-                q: 'What if my complaint is rejected?',
-                a: 'If the business rejects your complaint, you can escalate to the Financial Ombudsman Service for free. We can generate an FOS complaint form for an additional £19.',
-              },
-              {
-                q: 'Is my data secure?',
-                a: 'Yes. We use bank-level encryption. Your personal details are used only to generate your complaint letter and are deleted after 30 days.',
-              },
-            ].map((faq, idx) => (
-              <div key={idx} className="card">
-                <h3 className="font-semibold text-gray-900 mb-2">{faq.q}</h3>
-                <p className="text-gray-600">{faq.a}</p>
+
+          <div className="space-y-3">
+            {faqs.map((faq, i) => (
+              <div 
+                key={i} 
+                className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+              >
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between p-5 text-left"
+                >
+                  <span className="font-medium text-gray-900">{faq.q}</span>
+                  <ChevronDown 
+                    className={`w-5 h-5 text-gray-400 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} 
+                  />
+                </button>
+                {openFaq === i && (
+                  <div className="px-5 pb-5 text-gray-500">
+                    {faq.a}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -266,64 +302,60 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-brand-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to Write Your Complaint?
+      <section className="py-20 px-4">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-3xl sm:text-4xl font-semibold text-gray-900 mb-6">
+            Ready to get your money back?
           </h2>
-          <p className="text-brand-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of consumers who have used professional complaint letters to get the compensation they deserve.
+          <p className="text-gray-500 mb-8">
+            Takes about 8 minutes. No account needed.
           </p>
-          <Link href="/questionnaire" className="inline-flex items-center gap-2 bg-white text-brand-600 font-semibold py-3 px-8 rounded-lg hover:bg-brand-50 transition-colors">
-            Start Your Complaint
+          <Link 
+            href="/questionnaire" 
+            className="inline-flex items-center justify-center gap-2 bg-gray-900 text-white font-medium px-8 py-4 rounded-full hover:bg-gray-800 transition-all hover:scale-105"
+          >
+            Start your complaint
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
+      <footer className="border-t border-gray-200 py-12 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-4 gap-8 mb-8">
             <div>
-              <span className="text-xl font-bold text-white">ComplaintAI</span>
-              <p className="mt-4 text-sm">
-                Document preparation service for UK consumer complaints. 
-                Not a claims management company.
+              <span className="font-semibold text-gray-900">ComplaintAI</span>
+              <p className="text-sm text-gray-500 mt-2">
+                Document preparation service. Not a claims company.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-4">Complaint Types</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/questionnaire?type=pcp" className="hover:text-white">PCP / Motor Finance</Link></li>
-                <li><Link href="/questionnaire?type=section75" className="hover:text-white">Section 75</Link></li>
-                <li><Link href="/questionnaire?type=unaffordable" className="hover:text-white">Unaffordable Lending</Link></li>
-                <li><Link href="/questionnaire?type=holiday-park" className="hover:text-white">Holiday Parks</Link></li>
+              <p className="font-medium text-gray-900 mb-3">Complaints</p>
+              <ul className="space-y-2 text-sm text-gray-500">
+                <li><Link href="/questionnaire?type=pcp" className="hover:text-gray-900">Car Finance</Link></li>
+                <li><Link href="/questionnaire?type=section75" className="hover:text-gray-900">Credit Card</Link></li>
+                <li><Link href="/questionnaire?type=unaffordable" className="hover:text-gray-900">Unaffordable Lending</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-4">Resources</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="https://www.financial-ombudsman.org.uk" target="_blank" rel="noopener" className="hover:text-white">Financial Ombudsman</a></li>
-                <li><a href="https://www.fca.org.uk" target="_blank" rel="noopener" className="hover:text-white">FCA</a></li>
-                <li><a href="https://www.citizensadvice.org.uk" target="_blank" rel="noopener" className="hover:text-white">Citizens Advice</a></li>
+              <p className="font-medium text-gray-900 mb-3">Resources</p>
+              <ul className="space-y-2 text-sm text-gray-500">
+                <li><a href="https://www.financial-ombudsman.org.uk" target="_blank" className="hover:text-gray-900">Financial Ombudsman</a></li>
+                <li><a href="https://www.fca.org.uk" target="_blank" className="hover:text-gray-900">FCA</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/terms" className="hover:text-white">Terms of Service</Link></li>
-                <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
-                <li><Link href="/disclaimer" className="hover:text-white">Disclaimer</Link></li>
+              <p className="font-medium text-gray-900 mb-3">Legal</p>
+              <ul className="space-y-2 text-sm text-gray-500">
+                <li><Link href="/terms" className="hover:text-gray-900">Terms</Link></li>
+                <li><Link href="/privacy" className="hover:text-gray-900">Privacy</Link></li>
+                <li><Link href="/disclaimer" className="hover:text-gray-900">Disclaimer</Link></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-12 pt-8 text-sm text-center">
-            <p>
-              © {new Date().getFullYear()} ComplaintAI. This is a document preparation service, not legal advice.
-              <br />
-              We do not assess the merits of your individual claim or act on your behalf.
-            </p>
+          <div className="border-t border-gray-200 pt-8 text-center text-sm text-gray-500">
+            © {new Date().getFullYear()} ComplaintAI. Not legal advice.
           </div>
         </div>
       </footer>

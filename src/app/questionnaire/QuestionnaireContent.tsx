@@ -1,507 +1,460 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { ArrowLeft, ArrowRight, CheckCircle, Loader2 } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react'
+import AutocompleteInput from '@/components/AutocompleteInput'
+import { 
+  searchLenders, 
+  searchCarMakes,
+  UK_CAR_FINANCE_LENDERS,
+  UK_CREDIT_CARD_PROVIDERS,
+  UK_LOAN_PROVIDERS,
+  UK_HOLIDAY_PARK_COMPANIES 
+} from '@/lib/data/lenders'
 
-// Question definitions for each complaint type
-const questionSets: Record<string, QuestionSet> = {
-  pcp: {
-    title: 'PCP / Motor Finance Complaint',
-    description: 'Let\'s gather the details about your car finance agreement.',
-    questions: [
-      {
-        id: 'vehicle_type',
-        question: 'What type of vehicle did you finance?',
-        type: 'select',
-        options: ['Car', 'Van', 'Motorbike', 'Campervan', 'Other'],
-        required: true,
-      },
-      {
-        id: 'finance_type',
-        question: 'What type of finance agreement did you have?',
-        type: 'select',
-        options: ['PCP (Personal Contract Purchase)', 'HP (Hire Purchase)', 'Conditional Sale', 'Not sure'],
-        required: true,
-      },
-      {
-        id: 'lender_name',
-        question: 'Who was your finance provider (lender)?',
-        type: 'text',
-        placeholder: 'e.g. Black Horse, Santander Consumer Finance, Close Brothers',
-        required: true,
-      },
-      {
-        id: 'dealer_name',
-        question: 'Which dealership arranged the finance?',
-        type: 'text',
-        placeholder: 'e.g. Arnold Clark, Evans Halshaw',
-        required: true,
-      },
-      {
-        id: 'agreement_date',
-        question: 'When did you sign the finance agreement?',
-        type: 'date',
-        required: true,
-        helpText: 'Agreements between April 2007 and November 2024 may be eligible.',
-      },
-      {
-        id: 'finance_amount',
-        question: 'What was the total amount financed (approximately)?',
-        type: 'currency',
-        placeholder: '15000',
-        required: true,
-      },
-      {
-        id: 'commission_disclosed',
-        question: 'Were you told about any commission the dealer would receive from the lender?',
-        type: 'select',
-        options: ['No, I was not told about any commission', 'Yes, commission was mentioned', 'I don\'t remember', 'Not sure'],
-        required: true,
-      },
-      {
-        id: 'interest_rate_explained',
-        question: 'Was the interest rate fully explained to you?',
-        type: 'select',
-        options: ['No, I wasn\'t given details about how the rate was set', 'Yes, the rate was explained clearly', 'I don\'t remember'],
-        required: true,
-      },
-      {
-        id: 'agreement_status',
-        question: 'What is the current status of this agreement?',
-        type: 'select',
-        options: ['Fully paid off', 'Still paying', 'Settled early', 'Vehicle returned', 'Vehicle repossessed'],
-        required: true,
-      },
-      {
-        id: 'additional_details',
-        question: 'Is there anything else relevant to your complaint?',
-        type: 'textarea',
-        placeholder: 'Any additional details about how the finance was sold to you...',
-        required: false,
-      },
-    ],
-  },
-  section75: {
-    title: 'Section 75 Credit Card Claim',
-    description: 'Let\'s gather the details about your credit card purchase.',
-    questions: [
-      {
-        id: 'card_provider',
-        question: 'Which credit card provider did you use?',
-        type: 'text',
-        placeholder: 'e.g. Barclaycard, HSBC, Lloyds',
-        required: true,
-      },
-      {
-        id: 'purchase_description',
-        question: 'What did you purchase?',
-        type: 'textarea',
-        placeholder: 'Describe what you bought (e.g. holiday, furniture, electronics)',
-        required: true,
-      },
-      {
-        id: 'merchant_name',
-        question: 'Who did you buy it from?',
-        type: 'text',
-        placeholder: 'Company or seller name',
-        required: true,
-      },
-      {
-        id: 'purchase_date',
-        question: 'When did you make the purchase?',
-        type: 'date',
-        required: true,
-      },
-      {
-        id: 'total_cost',
-        question: 'What was the total cost of the purchase?',
-        type: 'currency',
-        placeholder: '500',
-        required: true,
-        helpText: 'Must be between £100 and £30,000 to qualify for Section 75.',
-      },
-      {
-        id: 'amount_on_card',
-        question: 'How much did you pay on the credit card?',
-        type: 'currency',
-        placeholder: '100',
-        required: true,
-        helpText: 'Even if you only paid a deposit on the card, you may still be covered.',
-      },
-      {
-        id: 'problem_type',
-        question: 'What went wrong?',
-        type: 'select',
-        options: [
-          'Goods never delivered',
-          'Goods faulty or damaged',
-          'Goods not as described',
-          'Service not provided',
-          'Company went bust',
-          'Other breach of contract',
-        ],
-        required: true,
-      },
-      {
-        id: 'problem_description',
-        question: 'Please describe the problem in detail:',
-        type: 'textarea',
-        placeholder: 'What happened? When did you discover the problem?',
-        required: true,
-      },
-      {
-        id: 'contacted_merchant',
-        question: 'Have you tried to resolve this with the merchant?',
-        type: 'select',
-        options: ['Yes, but they refused to help', 'Yes, but they didn\'t respond', 'No, they\'ve gone out of business', 'No, I haven\'t contacted them yet'],
-        required: true,
-      },
-      {
-        id: 'amount_claiming',
-        question: 'How much are you claiming?',
-        type: 'currency',
-        placeholder: '500',
-        required: true,
-      },
-    ],
-  },
-  unaffordable: {
-    title: 'Unaffordable Lending Complaint',
-    description: 'Let\'s gather details about the credit that was unaffordable for you.',
-    questions: [
-      {
-        id: 'credit_type',
-        question: 'What type of credit is this complaint about?',
-        type: 'select',
-        options: ['Credit card', 'Personal loan', 'Overdraft', 'Store card', 'Catalogue credit', 'Payday loan', 'Other'],
-        required: true,
-      },
-      {
-        id: 'lender_name',
-        question: 'Who is the lender?',
-        type: 'text',
-        placeholder: 'e.g. Barclays, Capital One, Very',
-        required: true,
-      },
-      {
-        id: 'account_opened',
-        question: 'When was the account opened?',
-        type: 'date',
-        required: true,
-      },
-      {
-        id: 'credit_limit_or_amount',
-        question: 'What was the credit limit or loan amount?',
-        type: 'currency',
-        placeholder: '5000',
-        required: true,
-      },
-      {
-        id: 'income_at_time',
-        question: 'What was your approximate annual income when you applied?',
-        type: 'currency',
-        placeholder: '25000',
-        required: true,
-      },
-      {
-        id: 'affordability_checks',
-        question: 'What affordability checks did the lender do?',
-        type: 'select',
-        options: [
-          'None that I\'m aware of',
-          'They asked about income but didn\'t verify',
-          'They did a credit check only',
-          'They asked for bank statements',
-          'I don\'t remember',
-        ],
-        required: true,
-      },
-      {
-        id: 'financial_situation',
-        question: 'What was your financial situation when you applied?',
-        type: 'multiselect',
-        options: [
-          'Had other debts',
-          'Was struggling to pay bills',
-          'Had defaults on credit file',
-          'Was using credit to pay credit',
-          'Had gambling issues',
-          'Was on benefits',
-          'Had recently lost job',
-          'None of the above',
-        ],
-        required: true,
-      },
-      {
-        id: 'limit_increases',
-        question: 'Did the lender increase your credit limit?',
-        type: 'select',
-        options: ['Yes, multiple times', 'Yes, once', 'No'],
-        required: true,
-      },
-      {
-        id: 'persistent_debt',
-        question: 'Were you in persistent debt (paying mostly interest)?',
-        type: 'select',
-        options: ['Yes, for over 18 months', 'Yes, for some time', 'No', 'Not sure'],
-        required: true,
-      },
-      {
-        id: 'harm_caused',
-        question: 'How did this unaffordable lending affect you?',
-        type: 'textarea',
-        placeholder: 'Describe the impact on your finances and wellbeing...',
-        required: true,
-      },
-    ],
-  },
-  'holiday-park': {
-    title: 'Holiday Park Mis-selling Complaint',
-    description: 'Let\'s gather details about your holiday park purchase.',
-    questions: [
-      {
-        id: 'park_name',
-        question: 'Which holiday park is this complaint about?',
-        type: 'text',
-        placeholder: 'e.g. Haven, Parkdean Resorts, Away Resorts',
-        required: true,
-      },
-      {
-        id: 'purchase_type',
-        question: 'What did you purchase?',
-        type: 'select',
-        options: ['Static caravan', 'Lodge', 'Chalet', 'Other'],
-        required: true,
-      },
-      {
-        id: 'purchase_date',
-        question: 'When did you make the purchase?',
-        type: 'date',
-        required: true,
-      },
-      {
-        id: 'purchase_price',
-        question: 'What was the purchase price?',
-        type: 'currency',
-        placeholder: '50000',
-        required: true,
-      },
-      {
-        id: 'finance_used',
-        question: 'How did you pay?',
-        type: 'select',
-        options: ['Cash/savings', 'Finance arranged by park', 'Personal loan', 'Credit card', 'Combination'],
-        required: true,
-      },
-      {
-        id: 'promises_made',
-        question: 'What promises were made during the sale?',
-        type: 'multiselect',
-        options: [
-          'Rental income would cover costs',
-          'Unit would hold its value',
-          'Could live there year-round',
-          'Fees would stay the same',
-          'Easy to sell later',
-          'Good investment',
-          'Other promises',
-        ],
-        required: true,
-      },
-      {
-        id: 'actual_experience',
-        question: 'What actually happened?',
-        type: 'multiselect',
-        options: [
-          'Rental income much lower than promised',
-          'Significant depreciation',
-          'Cannot live there year-round',
-          'Fees increased substantially',
-          'Difficult/impossible to sell',
-          'Hidden charges discovered',
-          'Forced to use expensive park services',
-          'Other issues',
-        ],
-        required: true,
-      },
-      {
-        id: 'financial_loss',
-        question: 'What is your estimated financial loss?',
-        type: 'currency',
-        placeholder: '20000',
-        required: true,
-      },
-      {
-        id: 'detailed_complaint',
-        question: 'Please describe your experience in detail:',
-        type: 'textarea',
-        placeholder: 'What were you told? What happened? Include specific examples...',
-        required: true,
-      },
-    ],
-  },
+// Question types
+interface Question {
+  id: string
+  question: string
+  type: 'text' | 'select' | 'autocomplete' | 'date' | 'currency' | 'textarea' | 'email' | 'tel'
+  placeholder?: string
+  options?: string[]
+  autocompleteType?: 'car' | 'credit' | 'loan' | 'holiday' | 'carMake'
+  required?: boolean
+  helpText?: string
 }
 
-// Personal details questions (same for all complaint types)
-const personalDetailsQuestions = [
+// Questions per complaint type
+const QUESTIONS: Record<string, Question[]> = {
+  pcp: [
+    {
+      id: 'lender',
+      question: 'Who provided your car finance?',
+      type: 'autocomplete',
+      autocompleteType: 'car',
+      placeholder: 'Search for your lender...',
+      required: true,
+      helpText: 'Start typing the name of your finance company',
+    },
+    {
+      id: 'car_make',
+      question: 'What make of car was it?',
+      type: 'autocomplete',
+      autocompleteType: 'carMake',
+      placeholder: 'Search for car make...',
+      required: true,
+    },
+    {
+      id: 'car_model',
+      question: 'What model?',
+      type: 'text',
+      placeholder: 'e.g. Focus, Golf, A3',
+      required: true,
+    },
+    {
+      id: 'purchase_date',
+      question: 'When did you take out the finance?',
+      type: 'date',
+      required: true,
+      helpText: 'Approximate date is fine',
+    },
+    {
+      id: 'finance_amount',
+      question: 'How much was the total finance amount?',
+      type: 'currency',
+      placeholder: '15000',
+      required: true,
+      helpText: 'The total amount borrowed, not the car price',
+    },
+    {
+      id: 'dealer_name',
+      question: 'Which dealership sold you the car?',
+      type: 'text',
+      placeholder: 'e.g. Evans Halshaw Birmingham',
+      required: true,
+    },
+    {
+      id: 'commission_disclosed',
+      question: 'Were you told about any commission the dealer would receive?',
+      type: 'select',
+      options: ['No, not at all', 'Mentioned briefly but not the amount', 'Yes, fully disclosed', 'I can\'t remember'],
+      required: true,
+    },
+    {
+      id: 'interest_rate',
+      question: 'Do you know what interest rate (APR) you were charged?',
+      type: 'text',
+      placeholder: 'e.g. 9.9% or "I don\'t know"',
+      required: false,
+    },
+    {
+      id: 'still_paying',
+      question: 'Are you still paying this finance?',
+      type: 'select',
+      options: ['Yes, still paying', 'No, paid off', 'No, returned the car'],
+      required: true,
+    },
+    {
+      id: 'additional_info',
+      question: 'Anything else relevant to your complaint?',
+      type: 'textarea',
+      placeholder: 'Optional - any other details that might help',
+      required: false,
+    },
+  ],
+  section75: [
+    {
+      id: 'card_provider',
+      question: 'Which credit card did you use?',
+      type: 'autocomplete',
+      autocompleteType: 'credit',
+      placeholder: 'Search for your card provider...',
+      required: true,
+    },
+    {
+      id: 'purchase_description',
+      question: 'What did you buy?',
+      type: 'text',
+      placeholder: 'e.g. Holiday package, Furniture, Electronics',
+      required: true,
+    },
+    {
+      id: 'merchant_name',
+      question: 'Who did you buy from?',
+      type: 'text',
+      placeholder: 'Company or seller name',
+      required: true,
+    },
+    {
+      id: 'purchase_date',
+      question: 'When did you make the purchase?',
+      type: 'date',
+      required: true,
+    },
+    {
+      id: 'amount_paid',
+      question: 'How much did you pay in total?',
+      type: 'currency',
+      placeholder: '500',
+      required: true,
+    },
+    {
+      id: 'card_amount',
+      question: 'How much of that was on your credit card?',
+      type: 'currency',
+      placeholder: '500',
+      required: true,
+      helpText: 'Must be between £100 and £30,000 for Section 75',
+    },
+    {
+      id: 'problem_type',
+      question: 'What went wrong?',
+      type: 'select',
+      options: [
+        'Goods never delivered',
+        'Goods faulty or not as described',
+        'Service not provided',
+        'Company went bust',
+        'Misrepresentation (told something untrue)',
+        'Other',
+      ],
+      required: true,
+    },
+    {
+      id: 'problem_description',
+      question: 'Describe what happened',
+      type: 'textarea',
+      placeholder: 'Tell us what went wrong and when you noticed the problem',
+      required: true,
+    },
+    {
+      id: 'contacted_merchant',
+      question: 'Have you tried to resolve this with the seller?',
+      type: 'select',
+      options: ['Yes, no response', 'Yes, they refused', 'Yes, they went bust', 'No'],
+      required: true,
+    },
+    {
+      id: 'amount_claiming',
+      question: 'How much are you claiming?',
+      type: 'currency',
+      placeholder: '500',
+      required: true,
+    },
+  ],
+  unaffordable: [
+    {
+      id: 'lender',
+      question: 'Who lent you the money?',
+      type: 'autocomplete',
+      autocompleteType: 'loan',
+      placeholder: 'Search for your lender...',
+      required: true,
+    },
+    {
+      id: 'product_type',
+      question: 'What type of credit was it?',
+      type: 'select',
+      options: ['Credit card', 'Personal loan', 'Car finance', 'Overdraft', 'Catalogue credit', 'Payday loan', 'Guarantor loan', 'Other'],
+      required: true,
+    },
+    {
+      id: 'start_date',
+      question: 'When did you take out this credit?',
+      type: 'date',
+      required: true,
+    },
+    {
+      id: 'credit_amount',
+      question: 'What was the credit limit or loan amount?',
+      type: 'currency',
+      placeholder: '5000',
+      required: true,
+    },
+    {
+      id: 'income_at_time',
+      question: 'What was your approximate monthly income then?',
+      type: 'currency',
+      placeholder: '1500',
+      required: true,
+    },
+    {
+      id: 'existing_debt',
+      question: 'Did you have other debts at the time?',
+      type: 'select',
+      options: ['Yes, significant debts', 'Yes, some debts', 'No major debts', 'Can\'t remember'],
+      required: true,
+    },
+    {
+      id: 'affordability_checks',
+      question: 'What checks did the lender do?',
+      type: 'select',
+      options: ['None that I know of', 'Basic credit check only', 'Asked about income', 'Thorough checks', 'Can\'t remember'],
+      required: true,
+    },
+    {
+      id: 'financial_difficulty',
+      question: 'Did this credit cause you financial difficulty?',
+      type: 'select',
+      options: ['Yes, serious difficulty', 'Yes, some difficulty', 'It contributed to existing problems', 'No'],
+      required: true,
+    },
+    {
+      id: 'difficulty_description',
+      question: 'Describe how this credit affected you',
+      type: 'textarea',
+      placeholder: 'e.g. missed payments, debt spiral, stress, had to borrow more',
+      required: true,
+    },
+    {
+      id: 'current_status',
+      question: 'What\'s the current status?',
+      type: 'select',
+      options: ['Still paying', 'Paid off', 'Defaulted', 'In debt management plan', 'Written off'],
+      required: true,
+    },
+  ],
+  'holiday-park': [
+    {
+      id: 'company',
+      question: 'Which company sold you the timeshare or holiday membership?',
+      type: 'autocomplete',
+      autocompleteType: 'holiday',
+      placeholder: 'Search for company...',
+      required: true,
+    },
+    {
+      id: 'product_type',
+      question: 'What did you buy?',
+      type: 'select',
+      options: ['Timeshare week(s)', 'Holiday club membership', 'Points-based scheme', 'Static caravan', 'Lodge ownership', 'Other'],
+      required: true,
+    },
+    {
+      id: 'purchase_date',
+      question: 'When did you buy it?',
+      type: 'date',
+      required: true,
+    },
+    {
+      id: 'purchase_price',
+      question: 'How much did you pay?',
+      type: 'currency',
+      placeholder: '10000',
+      required: true,
+    },
+    {
+      id: 'payment_method',
+      question: 'How did you pay?',
+      type: 'select',
+      options: ['Credit card', 'Finance/loan', 'Cash/bank transfer', 'Combination'],
+      required: true,
+    },
+    {
+      id: 'sales_presentation',
+      question: 'Were you invited to a sales presentation?',
+      type: 'select',
+      options: ['Yes, lengthy presentation (2+ hours)', 'Yes, short presentation', 'No presentation', 'Can\'t remember'],
+      required: true,
+    },
+    {
+      id: 'pressure_tactics',
+      question: 'Did you feel pressured to buy?',
+      type: 'select',
+      options: ['Yes, strong pressure', 'Yes, some pressure', 'No pressure', 'Not sure'],
+      required: true,
+    },
+    {
+      id: 'promises_made',
+      question: 'What were you promised?',
+      type: 'textarea',
+      placeholder: 'e.g. rental income, exchange availability, investment value, discounts',
+      required: true,
+    },
+    {
+      id: 'problems_experienced',
+      question: 'What problems have you experienced?',
+      type: 'textarea',
+      placeholder: 'e.g. can\'t book, fees increased, no rental income, can\'t exit',
+      required: true,
+    },
+  ],
+}
+
+// Personal details questions (same for all types)
+const PERSONAL_QUESTIONS: Question[] = [
   {
     id: 'full_name',
-    question: 'Your full name',
+    question: 'What\'s your full name?',
     type: 'text',
-    placeholder: 'As it appears on your agreement/account',
-    required: true,
-  },
-  {
-    id: 'address',
-    question: 'Your current address',
-    type: 'textarea',
-    placeholder: 'Full address including postcode',
+    placeholder: 'As it appears on your documents',
     required: true,
   },
   {
     id: 'email',
-    question: 'Your email address',
+    question: 'What\'s your email address?',
     type: 'email',
     placeholder: 'you@example.com',
     required: true,
+    helpText: 'We\'ll send your complaint letter here',
   },
   {
     id: 'phone',
-    question: 'Your phone number',
+    question: 'What\'s your phone number?',
     type: 'tel',
     placeholder: '07xxx xxxxxx',
     required: false,
+    helpText: 'Optional - only if you want the lender to call you',
   },
   {
-    id: 'account_reference',
-    question: 'Account/Agreement reference number (if known)',
-    type: 'text',
-    placeholder: 'Found on statements or agreement',
-    required: false,
+    id: 'address',
+    question: 'What\'s your address?',
+    type: 'textarea',
+    placeholder: '123 Example Street\nCity\nPostcode',
+    required: true,
   },
 ]
 
-interface Question {
-  id: string
-  question: string
-  type: 'text' | 'textarea' | 'select' | 'multiselect' | 'date' | 'currency' | 'email' | 'tel'
-  placeholder?: string
-  options?: string[]
-  required: boolean
-  helpText?: string
-}
-
-interface QuestionSet {
-  title: string
-  description: string
-  questions: Question[]
-}
-
 export default function QuestionnaireContent() {
-  const searchParams = useSearchParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const complaintType = searchParams.get('type') || 'pcp'
   
   const [currentStep, setCurrentStep] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, any>>({})
+  const [answers, setAnswers] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   
-  const questionSet = questionSets[complaintType] || questionSets.pcp
-  const allQuestions = [...questionSet.questions, ...personalDetailsQuestions]
-  const currentQuestion = allQuestions[currentStep]
+  // Get questions for this complaint type
+  const complaintQuestions = QUESTIONS[complaintType] || QUESTIONS.pcp
+  const allQuestions = [...complaintQuestions, ...PERSONAL_QUESTIONS]
   const totalSteps = allQuestions.length
+  
+  const currentQuestion = allQuestions[currentStep]
   const progress = ((currentStep + 1) / totalSteps) * 100
   
-  const isLastStep = currentStep === totalSteps - 1
-  const isPersonalDetailsSection = currentStep >= questionSet.questions.length
-  
-  const handleAnswer = (value: any) => {
-    setAnswers(prev => ({
-      ...prev,
-      [currentQuestion.id]: value,
-    }))
+  const isInPersonalDetails = currentStep >= complaintQuestions.length
+  const sectionLabel = isInPersonalDetails ? 'Your details' : 'About your complaint'
+
+  // Autocomplete search function
+  const getSearchFunction = useCallback((type?: string) => {
+    switch (type) {
+      case 'car':
+        return (q: string) => searchLenders(q, 'car')
+      case 'credit':
+        return (q: string) => searchLenders(q, 'credit')
+      case 'loan':
+        return (q: string) => searchLenders(q, 'loan')
+      case 'holiday':
+        return (q: string) => searchLenders(q, 'holiday')
+      case 'carMake':
+        return searchCarMakes
+      default:
+        return () => []
+    }
+  }, [])
+
+  const handleAnswer = (value: string) => {
+    setAnswers(prev => ({ ...prev, [currentQuestion.id]: value }))
   }
-  
+
   const canProceed = () => {
     if (!currentQuestion.required) return true
     const answer = answers[currentQuestion.id]
-    if (Array.isArray(answer)) return answer.length > 0
-    return answer && answer.toString().trim() !== ''
+    return answer && answer.trim().length > 0
   }
-  
-  const handleNext = async () => {
-    if (!canProceed()) return
-    
-    if (isLastStep) {
-      // Submit and go to payment
-      setIsSubmitting(true)
-      try {
-        const response = await fetch('/api/create-checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            complaintType,
-            answers,
-          }),
-        })
-        
-        const data = await response.json()
-        if (data.checkoutUrl) {
-          // Store answers in session storage for after payment
-          sessionStorage.setItem('complaintData', JSON.stringify({
-            complaintType,
-            answers,
-            sessionId: data.sessionId,
-          }))
-          window.location.href = data.checkoutUrl
-        }
-      } catch (error) {
-        console.error('Error creating checkout:', error)
-        alert('Something went wrong. Please try again.')
-      } finally {
-        setIsSubmitting(false)
-      }
-    } else {
+
+  const handleNext = () => {
+    if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1)
+    } else {
+      handleSubmit()
     }
   }
-  
+
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(prev => prev - 1)
     }
   }
-  
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true)
+    
+    // For testing - skip payment and go straight to generation
+    // Store answers in session storage
+    sessionStorage.setItem('complaintAnswers', JSON.stringify(answers))
+    sessionStorage.setItem('complaintType', complaintType)
+    
+    // Go to download page for testing
+    router.push('/download?test=true')
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && canProceed() && currentQuestion.type !== 'textarea') {
+      e.preventDefault()
+      handleNext()
+    }
+  }
+
+  // Render the appropriate input based on question type
   const renderInput = () => {
     const value = answers[currentQuestion.id] || ''
-    
+
     switch (currentQuestion.type) {
-      case 'text':
-      case 'email':
-      case 'tel':
+      case 'autocomplete':
         return (
-          <input
-            type={currentQuestion.type}
-            className="input text-lg"
-            placeholder={currentQuestion.placeholder}
+          <AutocompleteInput
             value={value}
-            onChange={(e) => handleAnswer(e.target.value)}
-            autoFocus
+            onChange={handleAnswer}
+            suggestions={[]}
+            onSearch={getSearchFunction(currentQuestion.autocompleteType)}
+            placeholder={currentQuestion.placeholder}
+            required={currentQuestion.required}
           />
         )
-      
-      case 'textarea':
-        return (
-          <textarea
-            className="input text-lg min-h-[150px]"
-            placeholder={currentQuestion.placeholder}
-            value={value}
-            onChange={(e) => handleAnswer(e.target.value)}
-            autoFocus
-          />
-        )
-      
+
       case 'select':
         return (
           <div className="space-y-3">
@@ -509,218 +462,202 @@ export default function QuestionnaireContent() {
               <button
                 key={option}
                 type="button"
-                className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                  value === option
-                    ? 'border-brand-600 bg-brand-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => handleAnswer(option)}
-              >
-                <span className="flex items-center gap-3">
-                  <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    value === option ? 'border-brand-600' : 'border-gray-300'
-                  }`}>
-                    {value === option && (
-                      <span className="w-3 h-3 rounded-full bg-brand-600" />
-                    )}
-                  </span>
-                  {option}
-                </span>
-              </button>
-            ))}
-          </div>
-        )
-      
-      case 'multiselect':
-        const selectedValues = Array.isArray(value) ? value : []
-        return (
-          <div className="space-y-3">
-            {currentQuestion.options?.map((option) => (
-              <button
-                key={option}
-                type="button"
-                className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                  selectedValues.includes(option)
-                    ? 'border-brand-600 bg-brand-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
                 onClick={() => {
-                  const newValues = selectedValues.includes(option)
-                    ? selectedValues.filter(v => v !== option)
-                    : [...selectedValues, option]
-                  handleAnswer(newValues)
+                  handleAnswer(option)
+                  // Auto-advance for select questions
+                  setTimeout(() => handleNext(), 300)
                 }}
+                className={`w-full text-left px-5 py-4 rounded-xl border-2 transition-all ${
+                  value === option
+                    ? 'border-gray-900 bg-gray-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
               >
-                <span className="flex items-center gap-3">
-                  <span className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                    selectedValues.includes(option) ? 'border-brand-600 bg-brand-600' : 'border-gray-300'
-                  }`}>
-                    {selectedValues.includes(option) && (
-                      <CheckCircle className="w-4 h-4 text-white" />
-                    )}
-                  </span>
-                  {option}
+                <span className="flex items-center justify-between">
+                  <span className="text-gray-900">{option}</span>
+                  {value === option && <Check className="w-5 h-5 text-gray-900" />}
                 </span>
               </button>
             ))}
-            <p className="text-sm text-gray-500">Select all that apply</p>
           </div>
         )
-      
+
+      case 'textarea':
+        return (
+          <textarea
+            value={value}
+            onChange={(e) => handleAnswer(e.target.value)}
+            placeholder={currentQuestion.placeholder}
+            className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-gray-900 outline-none transition-all resize-none bg-gray-50 focus:bg-white"
+            rows={4}
+            required={currentQuestion.required}
+          />
+        )
+
+      case 'currency':
+        return (
+          <div className="relative">
+            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 text-lg">£</span>
+            <input
+              type="number"
+              value={value}
+              onChange={(e) => handleAnswer(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={currentQuestion.placeholder}
+              className="w-full pl-10 pr-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-gray-900 outline-none transition-all bg-gray-50 focus:bg-white text-lg"
+              required={currentQuestion.required}
+            />
+          </div>
+        )
+
       case 'date':
         return (
           <input
             type="date"
-            className="input text-lg"
             value={value}
             onChange={(e) => handleAnswer(e.target.value)}
-            max={new Date().toISOString().split('T')[0]}
+            onKeyDown={handleKeyDown}
+            className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-gray-900 outline-none transition-all bg-gray-50 focus:bg-white text-lg"
+            required={currentQuestion.required}
+          />
+        )
+
+      case 'email':
+        return (
+          <input
+            type="email"
+            value={value}
+            onChange={(e) => handleAnswer(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={currentQuestion.placeholder}
+            className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-gray-900 outline-none transition-all bg-gray-50 focus:bg-white text-lg"
+            required={currentQuestion.required}
+          />
+        )
+
+      case 'tel':
+        return (
+          <input
+            type="tel"
+            value={value}
+            onChange={(e) => handleAnswer(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={currentQuestion.placeholder}
+            className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-gray-900 outline-none transition-all bg-gray-50 focus:bg-white text-lg"
+            required={currentQuestion.required}
+          />
+        )
+
+      default:
+        return (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => handleAnswer(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={currentQuestion.placeholder}
+            className="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-gray-900 outline-none transition-all bg-gray-50 focus:bg-white text-lg"
+            required={currentQuestion.required}
             autoFocus
           />
         )
-      
-      case 'currency':
-        return (
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">£</span>
-            <input
-              type="number"
-              className="input text-lg pl-8"
-              placeholder={currentQuestion.placeholder}
-              value={value}
-              onChange={(e) => handleAnswer(e.target.value)}
-              min="0"
-              step="1"
-              autoFocus
-            />
-          </div>
-        )
-      
-      default:
-        return null
     }
   }
-  
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => router.push('/')}
-              className="text-gray-600 hover:text-gray-900 flex items-center gap-2"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="hidden sm:inline">Back to Home</span>
-            </button>
-            <span className="text-sm text-gray-500">
-              Step {currentStep + 1} of {totalSteps}
-            </span>
-          </div>
-        </div>
-      </header>
-      
-      {/* Progress bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-3xl mx-auto">
-          <div className="h-1 bg-gray-200">
-            <div
-              className="h-1 bg-brand-600 transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-      </div>
-      
-      {/* Main content */}
-      <main className="max-w-3xl mx-auto px-4 py-8">
-        {/* Section header */}
-        {currentStep === 0 && (
-          <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {questionSet.title}
-            </h1>
-            <p className="text-gray-600">{questionSet.description}</p>
-          </div>
-        )}
-        
-        {isPersonalDetailsSection && currentStep === questionSet.questions.length && (
-          <div className="mb-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Your Details
-            </h2>
-            <p className="text-gray-600">
-              We need a few details to personalise your complaint letter.
-            </p>
-          </div>
-        )}
-        
-        {/* Question card */}
-        <div className="card">
-          <div className="mb-6">
-            <label className="block text-lg font-medium text-gray-900 mb-2">
-              {currentQuestion.question}
-              {currentQuestion.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            {currentQuestion.helpText && (
-              <p className="text-sm text-gray-500 mb-4">{currentQuestion.helpText}</p>
-            )}
-          </div>
-          
-          {renderInput()}
-        </div>
-        
-        {/* Navigation buttons */}
-        <div className="flex justify-between mt-6">
-          <button
-            onClick={handleBack}
-            disabled={currentStep === 0}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-              currentStep === 0
-                ? 'text-gray-400 cursor-not-allowed'
-                : 'text-gray-700 hover:bg-gray-100'
-            }`}
+      <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-100 z-50">
+        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+          <button 
+            onClick={currentStep === 0 ? () => router.push('/') : handleBack}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            Back
+            <span className="hidden sm:inline">Back</span>
           </button>
           
+          <span className="text-sm text-gray-500">
+            {currentStep + 1} of {totalSteps}
+          </span>
+          
+          <Link href="/" className="text-gray-400 hover:text-gray-600">
+            Exit
+          </Link>
+        </div>
+        {/* Progress bar */}
+        <div className="h-1 bg-gray-100">
+          <div 
+            className="h-full bg-gray-900 transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="pt-24 pb-32 px-4">
+        <div className="max-w-xl mx-auto">
+          {/* Section label */}
+          <p className="text-sm text-gray-500 mb-2">{sectionLabel}</p>
+          
+          {/* Question */}
+          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-8">
+            {currentQuestion.question}
+          </h1>
+
+          {/* Help text */}
+          {currentQuestion.helpText && (
+            <p className="text-gray-500 mb-6 -mt-4">
+              {currentQuestion.helpText}
+            </p>
+          )}
+
+          {/* Input */}
+          <div className="mb-8">
+            {renderInput()}
+          </div>
+        </div>
+      </main>
+
+      {/* Footer with Continue button */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4">
+        <div className="max-w-xl mx-auto">
           <button
             onClick={handleNext}
             disabled={!canProceed() || isSubmitting}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+            className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-medium transition-all ${
               canProceed() && !isSubmitting
-                ? 'bg-brand-600 text-white hover:bg-brand-700'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                ? 'bg-gray-900 text-white hover:bg-gray-800'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Processing...
+                Generating your letter...
               </>
-            ) : isLastStep ? (
+            ) : currentStep === totalSteps - 1 ? (
               <>
-                Continue to Payment
+                Generate complaint letter
                 <ArrowRight className="w-5 h-5" />
               </>
             ) : (
               <>
-                Next
+                Continue
                 <ArrowRight className="w-5 h-5" />
               </>
             )}
           </button>
+          
+          {currentQuestion.type !== 'select' && !currentQuestion.required && (
+            <button
+              onClick={handleNext}
+              className="w-full text-center text-sm text-gray-500 hover:text-gray-700 mt-3"
+            >
+              Skip this question
+            </button>
+          )}
         </div>
-      </main>
-      
-      {/* Footer disclaimer */}
-      <footer className="max-w-3xl mx-auto px-4 py-8 text-center">
-        <p className="text-xs text-gray-500">
-          This is a document preparation service, not legal advice.
-          We help you write your complaint letter - we do not submit it for you or act on your behalf.
-        </p>
       </footer>
     </div>
   )

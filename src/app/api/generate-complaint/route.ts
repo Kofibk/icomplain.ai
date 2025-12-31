@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { createClient } from '@supabase/supabase-js'
 
-// Only initialize if we have the keys
+// Only initialize if we have the key
 const anthropic = process.env.ANTHROPIC_API_KEY 
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder'
-)
 
 // System prompts for each complaint type
 const SYSTEM_PROMPTS: Record<string, string> = {
@@ -20,7 +14,7 @@ Your task is to generate a formal complaint letter that:
 1. Is addressed to the finance provider
 2. Clearly states the grounds for complaint (undisclosed commission arrangements)
 3. References relevant regulations (CONC 4.5.3R, Consumer Credit Act 1974)
-4. Cites the October 2024 Court of Appeal ruling on commission disclosure
+4. Cites the October 2024 Court of Appeal ruling on commission disclosure (Johnson v FirstRand Bank)
 5. Requests specific remedies (refund of commission, interest recalculation)
 6. Is professional, factual, and free from emotional language
 7. Includes all relevant dates, amounts, and reference numbers
@@ -32,8 +26,9 @@ Key legal points to include:
 - The FCA banned DCAs in January 2021, indicating regulatory concern about this practice
 - If commission was not disclosed, this may constitute a breach of fiduciary duty
 - The customer may be entitled to have the agreement reassessed as if properly disclosed
+- The customer may also be entitled to 8% simple interest on any refund
 
-IMPORTANT: Generate ONLY the complaint letter text. Do not include any meta-commentary or explanations.`,
+Generate a complete, ready-to-send complaint letter. Include today's date, proper formatting, and a 14-day response deadline.`,
 
   section75: `You are an expert at writing Section 75 Consumer Credit Act claim letters.
 
@@ -44,7 +39,7 @@ Your task is to generate a formal claim letter that:
 4. Details the breach of contract or misrepresentation by the merchant
 5. Provides specific evidence of the problem
 6. States the exact amount being claimed
-7. Sets a reasonable deadline for response (typically 14 days)
+7. Sets a reasonable deadline for response (14 days)
 8. Mentions escalation to the Financial Ombudsman Service if not resolved
 
 Key legal points to include:
@@ -54,7 +49,7 @@ Key legal points to include:
 - The customer can claim from the card provider even if the merchant has gone bust
 - Time limit is 6 years from the breach or date goods should have been delivered
 
-IMPORTANT: Generate ONLY the complaint letter text. Do not include any meta-commentary or explanations.`,
+Generate a complete, ready-to-send complaint letter.`,
 
   unaffordable: `You are an expert at writing complaints about irresponsible and unaffordable lending.
 
@@ -75,7 +70,7 @@ Key legal points to include:
 - If a customer was in persistent debt (18+ months paying mostly interest), lender should have intervened
 - Remedies can include refund of all interest and charges paid
 
-IMPORTANT: Generate ONLY the complaint letter text. Do not include any meta-commentary or explanations.`,
+Generate a complete, ready-to-send complaint letter.`,
 
   'holiday-park': `You are an expert at writing complaints about holiday park and static caravan mis-selling.
 
@@ -93,42 +88,42 @@ Key legal points to include:
 - Misleading sales practices breach the Consumer Protection Regulations
 - Unfair contract terms (e.g., forced use of park services) may be unenforceable
 - Significant hidden fees not disclosed at point of sale may be challengeable
+- High-pressure sales tactics in lengthy presentations may constitute unfair practices
 - Depreciation misrepresented as "holding value" is actionable misrepresentation
 
-IMPORTANT: Generate ONLY the complaint letter text. Do not include any meta-commentary or explanations.`,
+Generate a complete, ready-to-send complaint letter.`,
 }
 
-// Function to retrieve relevant FOS decisions for RAG
-async function getRelevantDecisions(complaintType: string, summary: string): Promise<string> {
-  try {
-    // Query Supabase for similar decisions using vector similarity
-    // This requires the embeddings to be set up in Supabase
-    const { data, error } = await supabase
-      .from('fos_decisions')
-      .select('summary, key_arguments, legal_references')
-      .eq('category', complaintType)
-      .eq('outcome', 'upheld')
-      .limit(5)
-    
-    if (error || !data || data.length === 0) {
-      // Return fallback guidance if no decisions found
-      return ''
-    }
-    
-    // Format relevant decisions for context
-    const context = data.map((d, i) => 
-      `Example ${i + 1}:
-Summary: ${d.summary}
-Successful arguments: ${d.key_arguments?.join('; ') || 'N/A'}
-Legal references: ${d.legal_references?.join(', ') || 'N/A'}`
-    ).join('\n\n')
-    
-    return `\n\nHere are examples of successful complaints similar to this case:\n\n${context}`
-    
-  } catch (error) {
-    console.error('Error fetching FOS decisions:', error)
-    return ''
-  }
+// Evidence checklist for each complaint type
+const EVIDENCE_CHECKLISTS: Record<string, string[]> = {
+  pcp: [
+    'Copy of your finance agreement',
+    'Any paperwork from the dealership',
+    'Proof of payments made (bank statements)',
+    'Any correspondence about the finance',
+    'The vehicle order form if you have it',
+  ],
+  section75: [
+    'Copy of your credit card statement showing the purchase',
+    'Receipt or invoice for the purchase',
+    'Any correspondence with the merchant',
+    'Evidence of the problem (photos, reports, etc.)',
+    'Proof you have tried to resolve with the merchant',
+  ],
+  unaffordable: [
+    'Bank statements from when you applied',
+    'Payslips from the time of application',
+    'Evidence of other debts at the time',
+    'Any correspondence about missed payments',
+    'Credit report if available',
+  ],
+  'holiday-park': [
+    'Your contract or membership agreement',
+    'Any sales brochures or promotional materials',
+    'Notes of what was promised verbally (if you made any)',
+    'Evidence of fees charged vs what was quoted',
+    'Any correspondence with the company',
+  ],
 }
 
 function formatAnswersForPrompt(complaintType: string, answers: Record<string, any>): string {
@@ -136,71 +131,69 @@ function formatAnswersForPrompt(complaintType: string, answers: Record<string, a
   
   // Common personal details
   sections.push(`COMPLAINANT DETAILS:
-Name: ${answers.full_name}
-Address: ${answers.address}
-Email: ${answers.email}
-Phone: ${answers.phone || 'Not provided'}
-Account/Reference: ${answers.account_reference || 'Not provided'}`)
+Name: ${answers.full_name || 'Not provided'}
+Address: ${answers.address || 'Not provided'}
+Email: ${answers.email || 'Not provided'}
+Phone: ${answers.phone || 'Not provided'}`)
   
   // Complaint-specific details
   switch (complaintType) {
     case 'pcp':
       sections.push(`
 MOTOR FINANCE DETAILS:
-Vehicle Type: ${answers.vehicle_type}
-Finance Type: ${answers.finance_type}
-Lender: ${answers.lender_name}
-Dealer: ${answers.dealer_name}
-Agreement Date: ${answers.agreement_date}
-Finance Amount: £${answers.finance_amount}
-Commission Disclosed: ${answers.commission_disclosed}
-Interest Rate Explained: ${answers.interest_rate_explained}
-Agreement Status: ${answers.agreement_status}
-Additional Details: ${answers.additional_details || 'None'}`)
+Car: ${answers.car_make || ''} ${answers.car_model || ''}
+Finance Provider: ${answers.lender || 'Not provided'}
+Dealership: ${answers.dealer_name || 'Not provided'}
+Agreement Date: ${answers.purchase_date || 'Not provided'}
+Finance Amount: £${answers.finance_amount || 'Not provided'}
+Interest Rate (APR): ${answers.interest_rate || 'Not provided'}
+Was Commission Disclosed: ${answers.commission_disclosed || 'Not provided'}
+Agreement Status: ${answers.still_paying || 'Not provided'}
+Additional Information: ${answers.additional_info || 'None'}`)
       break
       
     case 'section75':
       sections.push(`
 SECTION 75 CLAIM DETAILS:
-Card Provider: ${answers.card_provider}
-Purchase: ${answers.purchase_description}
-Merchant: ${answers.merchant_name}
-Purchase Date: ${answers.purchase_date}
-Total Cost: £${answers.total_cost}
-Amount Paid on Card: £${answers.amount_on_card}
-Problem Type: ${answers.problem_type}
-Problem Description: ${answers.problem_description}
-Contacted Merchant: ${answers.contacted_merchant}
-Amount Claiming: £${answers.amount_claiming}`)
+Credit Card Provider: ${answers.card_provider || 'Not provided'}
+What Was Purchased: ${answers.purchase_description || 'Not provided'}
+Merchant/Seller: ${answers.merchant_name || 'Not provided'}
+Purchase Date: ${answers.purchase_date || 'Not provided'}
+Total Amount Paid: £${answers.amount_paid || 'Not provided'}
+Amount Paid on Credit Card: £${answers.card_amount || 'Not provided'}
+Type of Problem: ${answers.problem_type || 'Not provided'}
+Problem Description: ${answers.problem_description || 'Not provided'}
+Attempted Resolution with Merchant: ${answers.contacted_merchant || 'Not provided'}
+Amount Being Claimed: £${answers.amount_claiming || 'Not provided'}`)
       break
       
     case 'unaffordable':
       sections.push(`
 UNAFFORDABLE LENDING DETAILS:
-Credit Type: ${answers.credit_type}
-Lender: ${answers.lender_name}
-Account Opened: ${answers.account_opened}
-Credit Limit/Loan Amount: £${answers.credit_limit_or_amount}
-Income at Time: £${answers.income_at_time}
-Affordability Checks: ${answers.affordability_checks}
-Financial Situation: ${Array.isArray(answers.financial_situation) ? answers.financial_situation.join(', ') : answers.financial_situation}
-Limit Increases: ${answers.limit_increases}
-Persistent Debt: ${answers.persistent_debt}
-Harm Caused: ${answers.harm_caused}`)
+Type of Credit: ${answers.product_type || 'Not provided'}
+Lender: ${answers.lender || 'Not provided'}
+Date Credit Was Taken Out: ${answers.start_date || 'Not provided'}
+Credit Amount/Limit: £${answers.credit_amount || 'Not provided'}
+Monthly Income at the Time: £${answers.income_at_time || 'Not provided'}
+Other Debts at the Time: ${answers.existing_debt || 'Not provided'}
+What Checks Were Done: ${answers.affordability_checks || 'Not provided'}
+Financial Difficulty Caused: ${answers.financial_difficulty || 'Not provided'}
+How It Affected Me: ${answers.difficulty_description || 'Not provided'}
+Current Status of the Account: ${answers.current_status || 'Not provided'}`)
       break
       
     case 'holiday-park':
       sections.push(`
 HOLIDAY PARK COMPLAINT DETAILS:
-Park Name: ${answers.park_name}
-Purchase Type: ${answers.purchase_type}
-Purchase Date: ${answers.purchase_date}
-Purchase Price: £${answers.purchase_price}
-Payment Method: ${answers.finance_used}
-Promises Made: ${Array.isArray(answers.promises_made) ? answers.promises_made.join(', ') : answers.promises_made}
-Actual Experience: ${Array.isArray(answers.actual_experience) ? answers.actual_experience.join(', ') : answers.actual_experience}
-Financial Loss: £${answers.financial_loss}
-Detailed Complaint: ${answers.detailed_complaint}`)
+Company: ${answers.company || 'Not provided'}
+Type of Product: ${answers.product_type || 'Not provided'}
+Purchase Date: ${answers.purchase_date || 'Not provided'}
+Purchase Price: £${answers.purchase_price || 'Not provided'}
+Payment Method: ${answers.payment_method || 'Not provided'}
+Sales Presentation: ${answers.sales_presentation || 'Not provided'}
+Pressure Felt: ${answers.pressure_tactics || 'Not provided'}
+What Was Promised: ${answers.promises_made || 'Not provided'}
+Problems Experienced: ${answers.problems_experienced || 'Not provided'}`)
       break
   }
   
@@ -210,7 +203,7 @@ Detailed Complaint: ${answers.detailed_complaint}`)
 export async function POST(request: NextRequest) {
   if (!anthropic) {
     return NextResponse.json(
-      { error: 'AI service not configured' },
+      { error: 'AI service not configured. Please check ANTHROPIC_API_KEY.' },
       { status: 500 }
     )
   }
@@ -238,23 +231,20 @@ export async function POST(request: NextRequest) {
     // Format answers for the prompt
     const formattedAnswers = formatAnswersForPrompt(complaintType, answers)
     
-    // Get relevant FOS decisions for RAG context
-    const ragContext = await getRelevantDecisions(complaintType, formattedAnswers)
-    
     // Build the user prompt
     const userPrompt = `Please generate a professional complaint letter based on the following information:
 
 ${formattedAnswers}
-${ragContext}
 
 Generate a complete, formal complaint letter ready to send. Include:
-1. Today's date
+1. Today's date (${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })})
 2. Proper letter formatting with addresses
 3. Clear subject line with any reference numbers
 4. All relevant legal references and regulations
 5. Specific remedy being requested
-6. A reasonable deadline for response (14 days)
-7. Professional sign-off
+6. A 14-day deadline for response
+7. Mention of escalation to Financial Ombudsman if not resolved
+8. Professional sign-off
 
 The letter should be ready to print and send with no further editing needed.`
 
@@ -276,20 +266,8 @@ The letter should be ready to print and send with no further editing needed.`
       ? message.content[0].text 
       : ''
     
-    // Generate evidence checklist based on complaint type
-    const evidenceChecklist = generateEvidenceChecklist(complaintType, answers)
-    
-    // Store the generated complaint in database
-    if (sessionId) {
-      await supabase.from('generated_complaints').insert({
-        session_id: sessionId,
-        complaint_type: complaintType,
-        answers: answers,
-        generated_letter: generatedLetter,
-        evidence_checklist: evidenceChecklist,
-        created_at: new Date().toISOString(),
-      })
-    }
+    // Get evidence checklist
+    const evidenceChecklist = EVIDENCE_CHECKLISTS[complaintType] || []
     
     return NextResponse.json({
       letter: generatedLetter,
@@ -303,45 +281,4 @@ The letter should be ready to print and send with no further editing needed.`
       { status: 500 }
     )
   }
-}
-
-function generateEvidenceChecklist(complaintType: string, answers: Record<string, any>): string[] {
-  const common = [
-    'Copy of this complaint letter (keep for your records)',
-    'Proof of identity (if requested)',
-  ]
-  
-  const specific: Record<string, string[]> = {
-    pcp: [
-      'Copy of your finance agreement',
-      'Any documents received at point of sale',
-      'Statements showing payments made',
-      'Any correspondence with the lender or dealer',
-      'The finance illustration/quote you were given',
-    ],
-    section75: [
-      'Copy of credit card statement showing the transaction',
-      'Receipt or invoice for the purchase',
-      'Any correspondence with the merchant',
-      'Evidence of the problem (photos if applicable)',
-      'Proof of what was advertised/promised',
-    ],
-    unaffordable: [
-      'Bank statements from around the time of application',
-      'Credit report from around that time (if available)',
-      'Evidence of financial difficulties (e.g., missed payments)',
-      'Any correspondence about limit increases',
-      'Evidence of debt management or payment plans',
-    ],
-    'holiday-park': [
-      'Purchase agreement/contract',
-      'Any sales brochures or materials',
-      'Evidence of promises made (emails, notes)',
-      'Invoices for fees and charges',
-      'Evidence of rental income (or lack thereof)',
-      'Any correspondence with the park',
-    ],
-  }
-  
-  return [...(specific[complaintType] || []), ...common]
 }
