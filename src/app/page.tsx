@@ -4,74 +4,116 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronDown, ArrowRight, Check } from 'lucide-react'
 
-const complaintTypes = [
+// Top 5 most common complaints + Other
+const topComplaints = [
   {
     id: 'car-finance',
-    title: 'Car finance',
-    subtitle: 'Hidden commissions on PCP/HP',
-    amount: '£1,000 - £3,000',
-    tag: 'Popular',
+    title: 'Mis-sold car finance?',
+    subtitle: 'Hidden commission, unfair deal',
+    amount: 'Avg. £1,100 back',
+    icon: '🚗',
     gradient: 'from-violet-500 to-purple-600',
+    examples: ['PCP deal', 'HP agreement', 'Secret fees'],
   },
   {
-    id: 'credit-card',
-    title: 'Credit card',
-    subtitle: 'Unaffordable limits',
-    amount: '£500 - £5,000',
-    tag: null,
+    id: 'faulty-goods',
+    title: 'Product broke or faulty?',
+    subtitle: 'TV, phone, appliance, anything',
+    amount: 'Full refund',
+    icon: '📦',
     gradient: 'from-blue-500 to-cyan-500',
+    examples: ['Faulty electronics', 'Broken appliance', 'Not as described'],
   },
   {
     id: 'bank-fraud',
-    title: 'Bank fraud',
-    subtitle: 'Scam refunds',
-    amount: '£500 - £10,000+',
-    tag: 'New rules',
+    title: 'Scammed & bank won\'t help?',
+    subtitle: 'Get your money back',
+    amount: 'Avg. £3,000 back',
+    icon: '🚨',
     gradient: 'from-rose-500 to-pink-600',
+    examples: ['APP fraud', 'Impersonation', 'Romance scam'],
   },
   {
-    id: 'unaffordable-loan',
-    title: 'Loans & debt',
-    subtitle: 'Irresponsible lending',
-    amount: '£500 - £5,000',
-    tag: null,
+    id: 'credit-card',
+    title: 'Credit card problems?',
+    subtitle: 'Unaffordable limits, charges',
+    amount: 'Up to £5,000',
+    icon: '💳',
     gradient: 'from-amber-500 to-orange-500',
+    examples: ['Limit increased unfairly', 'Couldn\'t afford it', 'Fees'],
   },
   {
-    id: 'section-75',
-    title: 'Card protection',
-    subtitle: 'Section 75 claims',
-    amount: '£100 - £30,000',
-    tag: null,
+    id: 'energy',
+    title: 'Energy bill dispute?',
+    subtitle: 'Wrong bill, overcharged',
+    amount: 'Bill corrected + £',
+    icon: '⚡',
     gradient: 'from-emerald-500 to-teal-500',
+    examples: ['Bill too high', 'Back-billing', 'Smart meter issues'],
   },
+  {
+    id: 'other',
+    title: 'Something else?',
+    subtitle: 'Any consumer complaint',
+    amount: 'We can help',
+    icon: '📝',
+    gradient: 'from-gray-500 to-gray-600',
+    examples: ['Insurance', 'Travel', 'Telecoms', 'Anything'],
+    isOther: true,
+  },
+]
+
+const allComplaintTypes = [
+  { id: 'car-finance', label: 'Car finance / PCP / HP', icon: '🚗' },
+  { id: 'credit-card', label: 'Credit card', icon: '💳' },
+  { id: 'bank-fraud', label: 'Bank fraud / scams', icon: '🚨' },
+  { id: 'unaffordable-loan', label: 'Loans / debt', icon: '💷' },
+  { id: 'section-75', label: 'Section 75 (card protection)', icon: '🛡️' },
+  { id: 'insurance', label: 'Insurance', icon: '🛡️' },
+  { id: 'energy', label: 'Energy (gas/electric)', icon: '⚡' },
+  { id: 'telecoms', label: 'Phone / broadband / TV', icon: '📱' },
+  { id: 'faulty-goods', label: 'Faulty products', icon: '📦' },
+  { id: 'travel', label: 'Travel / flights / holidays', icon: '✈️' },
+  { id: 'other', label: 'Something else', icon: '📝' },
+]
+
+const commonProblems = [
+  'My TV broke after 3 months and they won\'t refund me',
+  'I was charged hidden fees on my car finance',
+  'My energy bill is wrong and they won\'t fix it',
+  'I got scammed and my bank is refusing to help',
+  'I bought something online and it never arrived',
+  'My insurance claim was rejected unfairly',
+  'The company went bust and I lost my money',
+  'They keep calling me about a debt I don\'t owe',
 ]
 
 const faqs = [
   {
-    q: 'How do I know if I have a claim?',
-    a: 'If you feel you were treated unfairly by a bank or lender—whether they gave you credit you couldn\'t afford, hid fees, or refused to help after fraud—you likely have grounds. Our questionnaire helps you find out.',
+    q: 'What kind of complaints can you help with?',
+    a: 'Almost anything! Banks, lenders, shops, energy companies, phone providers, insurance, travel companies... if a company has treated you unfairly, we can help you write a proper complaint.',
   },
   {
-    q: 'What does it cost?',
-    a: '£29 flat fee. Unlike claims companies who take 25-40% of your payout, you keep 100% of any compensation.',
+    q: 'How much does it cost?',
+    a: '£29 flat fee for your personalised complaint letter. Unlike claims companies who take 25-40% of your payout, you keep 100% of any compensation you receive.',
   },
   {
-    q: 'How is this different from a template?',
-    a: 'Our AI writes a letter specific to your case, using arguments proven effective in 170,000+ Financial Ombudsman decisions. A template can\'t do that.',
+    q: 'Do I need any documents?',
+    a: 'Not essential. We can create your letter based on what you remember. But if you have receipts, statements, or emails from the company, they can help strengthen your case.',
   },
   {
-    q: 'Do I need documents?',
-    a: 'Not essential. We can work from what you remember. But agreements, statements, or letters help us write a stronger complaint.',
+    q: 'What happens after I send the complaint?',
+    a: 'The company usually has 8 weeks to respond. If they don\'t resolve it, you can escalate to the relevant Ombudsman for free. We tell you which one and how.',
   },
   {
-    q: 'What happens after I send it?',
-    a: 'The company has 8 weeks to respond. If they reject you, escalate to the Financial Ombudsman for free—we include that letter too.',
+    q: 'Is this a claims company?',
+    a: 'No. We\'re a document preparation service. We help you write your complaint - you send it yourself and keep 100% of any money you get back.',
   },
 ]
 
 export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [showAllTypes, setShowAllTypes] = useState(false)
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white antialiased">
@@ -82,17 +124,17 @@ export default function HomePage() {
             iComplain
           </Link>
           <div className="flex items-center gap-8">
-            <Link href="#claims" className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block">
-              Claims
+            <Link href="#complaints" className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block">
+              Complaints
             </Link>
             <Link href="#faq" className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block">
               FAQ
             </Link>
             <Link
-              href="#claims"
+              href="#complaints"
               className="text-sm font-medium bg-white text-black px-4 py-2 rounded-full hover:bg-white/90 transition-colors"
             >
-              Start claim
+              Start complaint
             </Link>
           </div>
         </div>
@@ -103,76 +145,97 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full text-sm mb-8">
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-            <span className="text-white/70">£8bn car finance payout underway</span>
+            <span className="text-white/70">Helped thousands get their money back</span>
           </div>
           
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-semibold tracking-tight leading-[1.1] mb-6">
-            Get your money back
+            Been treated unfairly?
             <br />
-            <span className="text-white/40">from banks & lenders</span>
+            <span className="text-white/40">Fight back.</span>
           </h1>
           
           <p className="text-xl text-white/60 max-w-xl mb-10 leading-relaxed">
-            Professional complaint letters in 5 minutes. 
-            Keep 100% of your compensation—no claims company taking a cut.
+            Whether it's a broken product, a dodgy deal, or a company that won't help - 
+            we write the complaint letter that gets results. 5 minutes. £29. Keep everything you get back.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-12">
             <Link
-              href="#claims"
+              href="#complaints"
               className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-4 rounded-full text-lg font-medium hover:bg-white/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              Check my claim
+              Start my complaint
               <ArrowRight className="w-5 h-5" />
             </Link>
-            <div className="flex items-center gap-2 text-white/40 px-4">
-              <span className="text-sm">£29 flat fee</span>
-              <span>•</span>
-              <span className="text-sm">5 minutes</span>
-            </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 pt-8 border-t border-white/10">
-            <div>
-              <div className="text-3xl font-semibold mb-1">170K+</div>
-              <div className="text-sm text-white/40">Cases analysed</div>
-            </div>
-            <div>
-              <div className="text-3xl font-semibold mb-1">75%</div>
-              <div className="text-sm text-white/40">FOS overturn rate</div>
-            </div>
-            <div>
-              <div className="text-3xl font-semibold mb-1">100%</div>
-              <div className="text-sm text-white/40">Yours to keep</div>
+          {/* Common problems scroll */}
+          <div className="overflow-hidden">
+            <p className="text-sm text-white/40 mb-3">Sound familiar?</p>
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
+              {commonProblems.map((problem, i) => (
+                <Link
+                  key={i}
+                  href="#complaints"
+                  className="flex-shrink-0 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-4 py-2 text-sm text-white/70 hover:text-white transition-colors"
+                >
+                  "{problem}"
+                </Link>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Claims grid */}
-      <section id="claims" className="py-20 px-6 scroll-mt-20">
+      {/* Stats */}
+      <section className="py-12 px-6 border-y border-white/5 bg-white/[0.02]">
+        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-8">
+          <div className="text-center">
+            <div className="text-3xl font-semibold mb-1">170K+</div>
+            <div className="text-sm text-white/40">Cases analysed</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-semibold mb-1">75%</div>
+            <div className="text-sm text-white/40">Average success rate</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-semibold mb-1">100%</div>
+            <div className="text-sm text-white/40">Yours to keep</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Complaint types - Top 5 + Other */}
+      <section id="complaints" className="py-20 px-6 scroll-mt-20">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-semibold tracking-tight mb-4">What can you claim?</h2>
-          <p className="text-white/50 mb-10">Select your situation to get started</p>
+          <h2 className="text-3xl font-semibold tracking-tight mb-4">What's your complaint about?</h2>
+          <p className="text-white/50 mb-10">Pick the closest match - or choose "Something else"</p>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {complaintTypes.map((type) => (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {topComplaints.map((type) => (
               <Link
                 key={type.id}
                 href={`/questionnaire?type=${type.id}`}
-                className="group relative bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-white/20 rounded-2xl p-6 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className={`group relative border rounded-2xl p-6 transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                  type.isOther 
+                    ? 'bg-white/[0.02] border-dashed border-white/20 hover:border-white/40' 
+                    : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/10 hover:border-white/20'
+                }`}
               >
-                {type.tag && (
-                  <span className="absolute top-4 right-4 text-xs bg-white/10 px-2 py-1 rounded-full">
-                    {type.tag}
-                  </span>
-                )}
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${type.gradient} mb-4 flex items-center justify-center`}>
-                  <div className="w-6 h-6 bg-white/20 rounded-lg" />
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${type.gradient} mb-4 flex items-center justify-center text-2xl`}>
+                  {type.icon}
                 </div>
                 <h3 className="text-lg font-medium mb-1">{type.title}</h3>
-                <p className="text-sm text-white/40 mb-4">{type.subtitle}</p>
+                <p className="text-sm text-white/40 mb-3">{type.subtitle}</p>
+                
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {type.examples.map((ex, i) => (
+                    <span key={i} className="text-xs bg-white/5 px-2 py-1 rounded-full text-white/50">
+                      {ex}
+                    </span>
+                  ))}
+                </div>
+                
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-emerald-400">{type.amount}</span>
                   <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 group-hover:translate-x-1 transition-all" />
@@ -180,6 +243,33 @@ export default function HomePage() {
               </Link>
             ))}
           </div>
+
+          {/* Show all types */}
+          <div className="text-center">
+            <button
+              onClick={() => setShowAllTypes(!showAllTypes)}
+              className="inline-flex items-center gap-2 text-white/50 hover:text-white text-sm transition-colors"
+            >
+              {showAllTypes ? 'Show less' : 'See all complaint types'}
+              <ChevronDown className={`w-4 h-4 transition-transform ${showAllTypes ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+
+          {showAllTypes && (
+            <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {allComplaintTypes.map((type) => (
+                <Link
+                  key={type.id}
+                  href={`/questionnaire?type=${type.id}`}
+                  className="flex items-center gap-3 p-4 bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-white/20 rounded-xl transition-all"
+                >
+                  <span className="text-xl">{type.icon}</span>
+                  <span className="text-white/80">{type.label}</span>
+                  <ArrowRight className="w-4 h-4 text-white/20 ml-auto" />
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -192,18 +282,18 @@ export default function HomePage() {
             {[
               {
                 step: '01',
-                title: 'Answer questions',
-                desc: 'Simple questions about what happened. No legal jargon, no complicated forms.',
+                title: 'Tell us what happened',
+                desc: 'Answer simple questions. No legal jargon - just tell us your story in plain English.',
               },
               {
                 step: '02',
-                title: 'We write your letter',
-                desc: 'AI generates a professional complaint citing the right regulations for your case.',
+                title: 'We write your complaint',
+                desc: 'Our AI creates a professional letter citing the right laws and regulations for your case.',
               },
               {
                 step: '03',
-                title: 'Send & get paid',
-                desc: 'Email your letter. They have 8 weeks to respond. Keep 100% of what you get back.',
+                title: 'Send it & get results',
+                desc: 'Email or post your letter. Most companies respond within 8 weeks. You keep 100% of any payout.',
               },
             ].map((item) => (
               <div key={item.step} className="relative">
@@ -216,24 +306,23 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Comparison */}
+      {/* Why not claims company */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-semibold tracking-tight mb-12 text-center">
-            Why not use a claims company?
+            Why do it yourself?
           </h2>
           
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Claims company */}
             <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8">
               <div className="text-2xl mb-6">🦈</div>
               <h3 className="text-xl font-medium mb-6">Claims companies</h3>
               <ul className="space-y-4">
                 {[
-                  'Take 25-40% of your payout',
+                  'Take 25-40% of your money',
                   'You could lose £1,000+',
                   'Same template for everyone',
-                  'Endless calls and emails',
+                  'Endless phone calls',
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-white/50">
                     <span className="text-rose-400 mt-0.5">✕</span>
@@ -243,15 +332,14 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* iComplain */}
             <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/20 rounded-2xl p-8">
               <div className="text-2xl mb-6">✨</div>
               <h3 className="text-xl font-medium mb-6">iComplain</h3>
               <ul className="space-y-4">
                 {[
-                  '£29 flat fee, nothing else',
-                  'Keep 100% of compensation',
-                  'Letter written for YOUR case',
+                  '£29 flat fee - that\'s it',
+                  'Keep 100% of your money',
+                  'Letter written for YOUR situation',
                   'Ready in 5 minutes',
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
@@ -263,7 +351,7 @@ export default function HomePage() {
               <div className="mt-8 pt-6 border-t border-white/10">
                 <p className="text-sm text-white/50">
                   <span className="text-white">Example:</span> On a £2,000 payout, claims companies take £500-800. 
-                  With us, you pay £29 and keep the full £2,000.
+                  With us, pay £29 and keep the full £2,000.
                 </p>
               </div>
             </div>
@@ -280,16 +368,17 @@ export default function HomePage() {
             ))}
           </div>
           <blockquote className="text-2xl sm:text-3xl font-medium leading-relaxed mb-8">
-            "Got my letter, sent it to Black Horse, and they paid me £2,400. 
-            <span className="text-white/40"> Best £29 I ever spent.</span>"
+            "My washing machine broke after 4 months. Currys wouldn't help. 
+            iComplain wrote me a letter and I got a full refund.
+            <span className="text-white/40"> Took 10 minutes.</span>"
           </blockquote>
           <div className="flex items-center justify-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-sm font-medium">
-              JT
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center text-sm font-medium">
+              SK
             </div>
             <div className="text-left">
-              <div className="font-medium">James T.</div>
-              <div className="text-sm text-white/40">Car finance claim</div>
+              <div className="font-medium">Sarah K.</div>
+              <div className="text-sm text-white/40">Faulty goods complaint</div>
             </div>
           </div>
         </div>
@@ -327,16 +416,16 @@ export default function HomePage() {
       <section className="py-24 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight mb-6">
-            Ready to get your money back?
+            Ready to fight back?
           </h2>
           <p className="text-white/50 mb-10 text-lg">
-            5 minutes. £29. Keep 100% of what you're owed.
+            5 minutes. £29. Keep 100% of what you get back.
           </p>
           <Link
-            href="#claims"
+            href="#complaints"
             className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-4 rounded-full text-lg font-medium hover:bg-white/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            Start my claim
+            Start my complaint
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>

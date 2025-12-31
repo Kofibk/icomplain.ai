@@ -750,6 +750,575 @@ export const COMPLAINT_CONFIGS = {
       remedy: 'refund of £X under your equal liability with the retailer',
     },
   },
+
+  // ---------------------------------------------------------------------------
+  // INSURANCE COMPLAINT
+  // ---------------------------------------------------------------------------
+  'insurance': {
+    id: 'insurance',
+    title: 'Insurance Complaint',
+    subtitle: 'Claim rejected, unfair charges, or mis-sold policy',
+    icon: '🛡️',
+    baseSuccessRate: 45,
+    maxSuccessRate: 80,
+    
+    regulations: {
+      primary: 'ICOBS 8.1',
+      secondary: ['Consumer Insurance (Disclosure and Representations) Act 2012', 'FCA Principle 6', 'ICOBS 6.1.5R'],
+    },
+    
+    questions: [
+      {
+        id: 'insurance_type',
+        question: 'What type of insurance is this about?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'car', label: 'Car insurance', successModifier: 0 },
+          { value: 'home', label: 'Home insurance', successModifier: 0 },
+          { value: 'travel', label: 'Travel insurance', successModifier: 5 },
+          { value: 'life', label: 'Life insurance', successModifier: 0 },
+          { value: 'pet', label: 'Pet insurance', successModifier: 5 },
+          { value: 'gadget', label: 'Gadget/phone insurance', successModifier: 8 },
+          { value: 'ppi', label: 'Payment Protection Insurance (PPI)', successModifier: 10 },
+          { value: 'other', label: 'Other insurance', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'complaint_reason',
+        question: 'What\'s your complaint about?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'claim_rejected', label: 'My claim was rejected', successModifier: 10 },
+          { value: 'claim_underpaid', label: 'Claim was paid but not enough', successModifier: 8 },
+          { value: 'claim_delayed', label: 'Claim is taking too long', successModifier: 5 },
+          { value: 'mis_sold', label: 'I was mis-sold the policy', successModifier: 12 },
+          { value: 'cancelled', label: 'Policy cancelled unfairly', successModifier: 10 },
+          { value: 'premium_increase', label: 'Unreasonable premium increase', successModifier: 5 },
+          { value: 'auto_renewal', label: 'Auto-renewed without consent', successModifier: 8 },
+          { value: 'other', label: 'Something else', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'rejection_reason',
+        question: 'Why did they give for rejecting/reducing your claim?',
+        type: 'select',
+        required: false,
+        options: [
+          { value: 'non_disclosure', label: 'Non-disclosure (didn\'t tell them something)', successModifier: 8, helpText: 'Consumer Act 2012 protects honest mistakes' },
+          { value: 'exclusion', label: 'Policy exclusion', successModifier: 5 },
+          { value: 'wear_tear', label: 'Wear and tear', successModifier: 3 },
+          { value: 'pre_existing', label: 'Pre-existing condition', successModifier: 5 },
+          { value: 'late_notification', label: 'Notified too late', successModifier: 3 },
+          { value: 'fraud', label: 'Suspected fraud (wrongly)', successModifier: 12 },
+          { value: 'not_covered', label: 'Said it wasn\'t covered', successModifier: 5 },
+          { value: 'na', label: 'Not applicable / other', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'insurer',
+        question: 'Which insurance company is this?',
+        type: 'autocomplete',
+        autocompleteType: 'all',
+        required: true,
+        placeholder: 'e.g. Aviva, Direct Line, Admiral...',
+      },
+      {
+        id: 'claim_amount',
+        question: 'How much is your claim worth (approximately)?',
+        type: 'currency',
+        required: false,
+        placeholder: 'e.g. 2500',
+      },
+      {
+        id: 'policy_date',
+        question: 'When did you take out the policy?',
+        type: 'date',
+        required: false,
+      },
+    ],
+    
+    relevantEvidence: [
+      'correspondence',
+      'credit_agreement',
+    ],
+    
+    letterTemplate: {
+      breach: 'unfair rejection of claim / failure to handle claim fairly',
+      regulation: 'ICOBS 8.1 (fair claims handling)',
+      harm: 'claim rejected/underpaid causing financial loss of £X',
+      remedy: 'payment of claim in full plus compensation for distress',
+    },
+  },
+
+  // ---------------------------------------------------------------------------
+  // ENERGY COMPLAINT
+  // ---------------------------------------------------------------------------
+  'energy': {
+    id: 'energy',
+    title: 'Energy Complaint',
+    subtitle: 'Gas, electricity, billing, or switching issues',
+    icon: '⚡',
+    baseSuccessRate: 50,
+    maxSuccessRate: 82,
+    
+    regulations: {
+      primary: 'Ofgem Licence Conditions',
+      secondary: ['Consumer Rights Act 2015', 'Energy Switch Guarantee'],
+    },
+    
+    questions: [
+      {
+        id: 'energy_type',
+        question: 'Which energy service is this about?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'gas', label: 'Gas', successModifier: 0 },
+          { value: 'electricity', label: 'Electricity', successModifier: 0 },
+          { value: 'both', label: 'Both gas and electricity', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'complaint_reason',
+        question: 'What\'s the problem?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'wrong_bill', label: 'Bill is wrong / overcharged', successModifier: 10 },
+          { value: 'estimated_bills', label: 'Estimated bills too high', successModifier: 8 },
+          { value: 'back_billing', label: 'Sent a bill for years ago', successModifier: 12, helpText: 'Back-billing rules limit this to 12 months' },
+          { value: 'switch_problem', label: 'Problems switching supplier', successModifier: 8 },
+          { value: 'meter_problem', label: 'Meter issue / smart meter problems', successModifier: 5 },
+          { value: 'debt_collection', label: 'Unfair debt collection', successModifier: 10 },
+          { value: 'disconnection', label: 'Threatened with disconnection', successModifier: 12 },
+          { value: 'poor_service', label: 'Poor customer service', successModifier: 3 },
+          { value: 'direct_debit', label: 'Direct debit set too high', successModifier: 8 },
+          { value: 'other', label: 'Something else', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'supplier',
+        question: 'Which energy supplier?',
+        type: 'autocomplete',
+        autocompleteType: 'all',
+        required: true,
+        placeholder: 'e.g. British Gas, EDF, Octopus...',
+      },
+      {
+        id: 'amount_disputed',
+        question: 'How much money is involved?',
+        type: 'currency',
+        required: false,
+        placeholder: 'e.g. 500',
+      },
+      {
+        id: 'contacted_supplier',
+        question: 'Have you complained to the supplier already?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'yes_8_weeks', label: 'Yes - over 8 weeks ago', successModifier: 10, highlight: true },
+          { value: 'yes_deadlock', label: 'Yes - they sent a deadlock letter', successModifier: 12 },
+          { value: 'yes_recent', label: 'Yes - less than 8 weeks ago', successModifier: 0, warning: 'May need to wait 8 weeks before Ombudsman' },
+          { value: 'no', label: 'No - not yet', successModifier: -5, warning: 'You should complain to supplier first' },
+        ],
+      },
+    ],
+    
+    relevantEvidence: [
+      'correspondence',
+      'bank_statements',
+    ],
+    
+    letterTemplate: {
+      breach: 'breach of supply licence conditions / billing error',
+      regulation: 'Ofgem Supply Licence Conditions',
+      harm: 'overcharged by £X / caused significant distress',
+      remedy: 'correction of bill and compensation for distress',
+    },
+  },
+
+  // ---------------------------------------------------------------------------
+  // TELECOMS COMPLAINT
+  // ---------------------------------------------------------------------------
+  'telecoms': {
+    id: 'telecoms',
+    title: 'Phone, Broadband or TV Complaint',
+    subtitle: 'Service problems, billing, or contract issues',
+    icon: '📱',
+    baseSuccessRate: 48,
+    maxSuccessRate: 80,
+    
+    regulations: {
+      primary: 'Ofcom General Conditions',
+      secondary: ['Consumer Rights Act 2015', 'Communications Act 2003'],
+    },
+    
+    questions: [
+      {
+        id: 'service_type',
+        question: 'What service is this about?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'mobile', label: 'Mobile phone', successModifier: 0 },
+          { value: 'broadband', label: 'Broadband', successModifier: 5 },
+          { value: 'landline', label: 'Landline', successModifier: 0 },
+          { value: 'tv', label: 'TV package', successModifier: 0 },
+          { value: 'bundle', label: 'Bundle (multiple services)', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'complaint_reason',
+        question: 'What\'s the problem?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'service_not_working', label: 'Service not working properly', successModifier: 8 },
+          { value: 'speed_slow', label: 'Broadband speed much slower than promised', successModifier: 10 },
+          { value: 'wrong_bill', label: 'Wrong charges on bill', successModifier: 10 },
+          { value: 'contract_dispute', label: 'Contract dispute / early exit fees', successModifier: 8 },
+          { value: 'mis_sold', label: 'Mis-sold the contract', successModifier: 12 },
+          { value: 'switch_problem', label: 'Problems switching provider', successModifier: 8 },
+          { value: 'roaming', label: 'Unexpected roaming charges', successModifier: 8 },
+          { value: 'poor_service', label: 'Poor customer service', successModifier: 3 },
+          { value: 'other', label: 'Something else', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'provider',
+        question: 'Which provider?',
+        type: 'autocomplete',
+        autocompleteType: 'all',
+        required: true,
+        placeholder: 'e.g. BT, Vodafone, Sky, Virgin...',
+      },
+      {
+        id: 'amount_disputed',
+        question: 'How much money is involved?',
+        type: 'currency',
+        required: false,
+        placeholder: 'e.g. 200',
+      },
+      {
+        id: 'contacted_provider',
+        question: 'Have you complained to the provider already?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'yes_8_weeks', label: 'Yes - over 8 weeks ago', successModifier: 10 },
+          { value: 'yes_deadlock', label: 'Yes - they sent a deadlock letter', successModifier: 12 },
+          { value: 'yes_recent', label: 'Yes - less than 8 weeks ago', successModifier: 0 },
+          { value: 'no', label: 'No - not yet', successModifier: -5 },
+        ],
+      },
+    ],
+    
+    relevantEvidence: [
+      'correspondence',
+      'bank_statements',
+    ],
+    
+    letterTemplate: {
+      breach: 'failure to provide service as contracted / billing error',
+      regulation: 'Ofcom General Conditions of Entitlement',
+      harm: 'overcharged / service not as promised',
+      remedy: 'refund of £X and compensation for poor service',
+    },
+  },
+
+  // ---------------------------------------------------------------------------
+  // FAULTY GOODS / RETAIL COMPLAINT
+  // ---------------------------------------------------------------------------
+  'faulty-goods': {
+    id: 'faulty-goods',
+    title: 'Faulty Product Complaint',
+    subtitle: 'Broken goods, refunds, or repairs',
+    icon: '📦',
+    baseSuccessRate: 55,
+    maxSuccessRate: 85,
+    
+    regulations: {
+      primary: 'Consumer Rights Act 2015',
+      secondary: ['Sale of Goods Act 1979', 'Consumer Contracts Regulations 2013'],
+    },
+    
+    questions: [
+      {
+        id: 'product_type',
+        question: 'What type of product?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'electronics', label: 'Electronics (TV, phone, laptop, etc.)', successModifier: 5 },
+          { value: 'appliance', label: 'Appliance (washing machine, fridge, etc.)', successModifier: 5 },
+          { value: 'furniture', label: 'Furniture', successModifier: 3 },
+          { value: 'car', label: 'Car / vehicle', successModifier: 8 },
+          { value: 'clothing', label: 'Clothing / shoes', successModifier: 3 },
+          { value: 'other', label: 'Other product', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'problem_type',
+        question: 'What\'s wrong with it?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'doesnt_work', label: 'Doesn\'t work / broken', successModifier: 10 },
+          { value: 'not_as_described', label: 'Not as described', successModifier: 12 },
+          { value: 'poor_quality', label: 'Poor quality / fell apart quickly', successModifier: 8 },
+          { value: 'missing_parts', label: 'Missing parts or incomplete', successModifier: 8 },
+          { value: 'dangerous', label: 'Dangerous / safety issue', successModifier: 15 },
+          { value: 'other', label: 'Other problem', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'when_bought',
+        question: 'When did you buy it?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'under_30_days', label: 'Less than 30 days ago', successModifier: 15, highlight: true, badge: 'Full refund rights' },
+          { value: '30_days_6_months', label: '30 days to 6 months ago', successModifier: 10, badge: 'Strong rights' },
+          { value: '6_months_1_year', label: '6 months to 1 year ago', successModifier: 5 },
+          { value: '1_2_years', label: '1-2 years ago', successModifier: 0 },
+          { value: 'over_2_years', label: 'Over 2 years ago', successModifier: -5 },
+          { value: 'over_6_years', label: 'Over 6 years ago', successModifier: -15, warning: 'May be out of time' },
+        ],
+        helpText: 'Under 30 days = automatic right to full refund. Under 6 months = retailer must prove it wasn\'t faulty.',
+      },
+      {
+        id: 'retailer',
+        question: 'Where did you buy it?',
+        type: 'autocomplete',
+        autocompleteType: 'all',
+        required: true,
+        placeholder: 'e.g. Argos, Currys, Amazon...',
+      },
+      {
+        id: 'amount_paid',
+        question: 'How much did you pay?',
+        type: 'currency',
+        required: true,
+        placeholder: 'e.g. 500',
+      },
+      {
+        id: 'what_happened',
+        question: 'What did they say when you complained?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'refused_refund', label: 'Refused refund', successModifier: 8 },
+          { value: 'offered_repair', label: 'Offered repair only', successModifier: 5 },
+          { value: 'offered_voucher', label: 'Offered voucher instead of refund', successModifier: 8 },
+          { value: 'blamed_me', label: 'Blamed me for the damage', successModifier: 10 },
+          { value: 'no_response', label: 'No response', successModifier: 5 },
+          { value: 'other', label: 'Other', successModifier: 0 },
+        ],
+      },
+    ],
+    
+    relevantEvidence: [
+      'correspondence',
+      'payment_history',
+    ],
+    
+    letterTemplate: {
+      breach: 'goods not of satisfactory quality / not as described',
+      regulation: 'Consumer Rights Act 2015 Section 9/11',
+      harm: 'paid £X for faulty/substandard product',
+      remedy: 'full refund of £X',
+    },
+  },
+
+  // ---------------------------------------------------------------------------
+  // TRAVEL COMPLAINT
+  // ---------------------------------------------------------------------------
+  'travel': {
+    id: 'travel',
+    title: 'Travel Complaint',
+    subtitle: 'Flights, holidays, hotels, or cancellations',
+    icon: '✈️',
+    baseSuccessRate: 50,
+    maxSuccessRate: 85,
+    
+    regulations: {
+      primary: 'Package Travel Regulations 2018',
+      secondary: ['EU Regulation 261/2004', 'Consumer Rights Act 2015'],
+    },
+    
+    questions: [
+      {
+        id: 'travel_type',
+        question: 'What type of travel service?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'flight', label: 'Flight', successModifier: 10 },
+          { value: 'package_holiday', label: 'Package holiday', successModifier: 8 },
+          { value: 'hotel', label: 'Hotel / accommodation', successModifier: 5 },
+          { value: 'cruise', label: 'Cruise', successModifier: 5 },
+          { value: 'car_hire', label: 'Car hire', successModifier: 5 },
+          { value: 'other', label: 'Other travel service', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'problem_type',
+        question: 'What happened?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'cancelled', label: 'Flight/trip cancelled', successModifier: 15, highlight: true },
+          { value: 'delayed', label: 'Significant delay (3+ hours)', successModifier: 12 },
+          { value: 'downgraded', label: 'Downgraded (flight/hotel)', successModifier: 10 },
+          { value: 'lost_baggage', label: 'Lost or damaged baggage', successModifier: 8 },
+          { value: 'not_as_described', label: 'Not as described/advertised', successModifier: 10 },
+          { value: 'poor_quality', label: 'Poor quality / substandard', successModifier: 8 },
+          { value: 'denied_boarding', label: 'Denied boarding', successModifier: 15 },
+          { value: 'refund_refused', label: 'Refund refused', successModifier: 10 },
+          { value: 'other', label: 'Something else', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'company',
+        question: 'Which company is this about?',
+        type: 'autocomplete',
+        autocompleteType: 'all',
+        required: true,
+        placeholder: 'e.g. British Airways, TUI, Booking.com...',
+      },
+      {
+        id: 'amount_lost',
+        question: 'How much are you out of pocket?',
+        type: 'currency',
+        required: false,
+        placeholder: 'e.g. 800',
+      },
+      {
+        id: 'when_happened',
+        question: 'When did this happen?',
+        type: 'date',
+        required: true,
+      },
+    ],
+    
+    relevantEvidence: [
+      'correspondence',
+      'payment_history',
+    ],
+    
+    letterTemplate: {
+      breach: 'cancellation/delay/failure to provide service as booked',
+      regulation: 'EU Regulation 261/2004 / Package Travel Regulations 2018',
+      harm: 'financial loss of £X plus significant inconvenience',
+      remedy: 'compensation under EU261 plus refund of expenses',
+    },
+  },
+
+  // ---------------------------------------------------------------------------
+  // OTHER / GENERAL COMPLAINT
+  // ---------------------------------------------------------------------------
+  'other': {
+    id: 'other',
+    title: 'Other Complaint',
+    subtitle: 'Any other consumer issue',
+    icon: '📝',
+    baseSuccessRate: 40,
+    maxSuccessRate: 75,
+    
+    regulations: {
+      primary: 'Consumer Rights Act 2015',
+      secondary: ['FCA Handbook (if financial)', 'Treating Customers Fairly'],
+    },
+    
+    questions: [
+      {
+        id: 'sector',
+        question: 'What sector is your complaint about?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'financial', label: 'Financial services (bank, loan, investment)', successModifier: 5 },
+          { value: 'retail', label: 'Retail / shopping', successModifier: 3 },
+          { value: 'utilities', label: 'Utilities (water, council tax)', successModifier: 3 },
+          { value: 'health', label: 'Healthcare / dental', successModifier: 0 },
+          { value: 'legal', label: 'Legal services', successModifier: 0 },
+          { value: 'property', label: 'Property / estate agents', successModifier: 5 },
+          { value: 'motoring', label: 'Motoring (garage, repairs)', successModifier: 5 },
+          { value: 'education', label: 'Education / training', successModifier: 0 },
+          { value: 'other', label: 'Something else', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'problem_summary',
+        question: 'In one sentence, what went wrong?',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g. They charged me twice and won\'t refund...',
+      },
+      {
+        id: 'company_name',
+        question: 'Which company is this about?',
+        type: 'text',
+        required: true,
+        placeholder: 'Company name',
+      },
+      {
+        id: 'amount_involved',
+        question: 'How much money is involved (if any)?',
+        type: 'currency',
+        required: false,
+        placeholder: 'e.g. 500',
+      },
+      {
+        id: 'what_happened',
+        question: 'Tell us more about what happened',
+        type: 'text',
+        required: true,
+        placeholder: 'Give us the key facts...',
+      },
+      {
+        id: 'what_want',
+        question: 'What outcome do you want?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'refund', label: 'Full refund', successModifier: 5 },
+          { value: 'partial_refund', label: 'Partial refund', successModifier: 3 },
+          { value: 'compensation', label: 'Compensation for inconvenience', successModifier: 3 },
+          { value: 'apology', label: 'Apology and explanation', successModifier: 0 },
+          { value: 'fix_problem', label: 'Just fix the problem', successModifier: 3 },
+          { value: 'other', label: 'Something else', successModifier: 0 },
+        ],
+      },
+      {
+        id: 'contacted_already',
+        question: 'Have you already complained to them?',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'yes_no_response', label: 'Yes - no response', successModifier: 8 },
+          { value: 'yes_rejected', label: 'Yes - they rejected my complaint', successModifier: 10 },
+          { value: 'yes_partial', label: 'Yes - they offered something but not enough', successModifier: 5 },
+          { value: 'no', label: 'No - not yet', successModifier: 0 },
+        ],
+      },
+    ],
+    
+    relevantEvidence: [
+      'correspondence',
+      'bank_statements',
+    ],
+    
+    letterTemplate: {
+      breach: 'failure to provide satisfactory service / breach of contract',
+      regulation: 'Consumer Rights Act 2015',
+      harm: 'financial loss and/or significant inconvenience',
+      remedy: 'appropriate resolution as described in complaint',
+    },
+  },
 }
 
 // =============================================================================
