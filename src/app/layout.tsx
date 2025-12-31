@@ -3,9 +3,9 @@ import type { Metadata } from 'next'
 import CookieConsent from '@/components/CookieConsent'
 
 export const metadata: Metadata = {
-  title: 'ComplaintAI - Professional Complaint Letter Generator',
-  description: 'Generate ombudsman-quality complaint letters for PCP claims, Section 75, and more. Keep 100% of your compensation.',
-  keywords: 'PCP claim, Section 75, car finance complaint, consumer credit complaint, ombudsman complaint',
+  title: 'iComplain - AI-Powered Complaint Letter Generator',
+  description: 'Turn your evidence into winning complaint letters. Upload documents, explain what happened, and let AI build your case. Keep 100% of your compensation.',
+  keywords: 'PCP claim, Section 75, car finance complaint, consumer credit complaint, ombudsman complaint, complaint letter generator',
 }
 
 export default function RootLayout({

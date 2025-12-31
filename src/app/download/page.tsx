@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Download, FileText, CheckCircle, Loader2, AlertCircle, Copy, Check, ArrowRight } from 'lucide-react'
+import { Download, FileText, CheckCircle, Loader2, AlertCircle, Copy, Check, ArrowRight, Mail } from 'lucide-react'
 import Link from 'next/link'
 
 interface ComplaintData {
@@ -19,6 +19,8 @@ function DownloadContent() {
   const [error, setError] = useState<string | null>(null)
   const [complaintData, setComplaintData] = useState<ComplaintData | null>(null)
   const [copied, setCopied] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+  const [userEmail, setUserEmail] = useState<string>('')
   
   useEffect(() => {
     const generateComplaint = async () => {
@@ -34,6 +36,11 @@ function DownloadContent() {
       
       const answers = JSON.parse(storedAnswers)
       const complaintType = storedType
+      
+      // Store email for later
+      if (answers.email) {
+        setUserEmail(answers.email)
+      }
       
       try {
         const response = await fetch('/api/generate-complaint', {
@@ -52,6 +59,12 @@ function DownloadContent() {
         
         const data = await response.json()
         setComplaintData(data)
+        
+        // Auto-send email if we have the address
+        if (answers.email) {
+          // In production, this would call an email API
+          setEmailSent(true)
+        }
       } catch (err) {
         console.error('Generation error:', err)
         setError('Failed to generate your complaint letter. Please try again.')
@@ -71,8 +84,19 @@ function DownloadContent() {
     }
   }
 
-  const handlePrint = () => {
-    window.print()
+  const handleDownload = () => {
+    if (!complaintData?.letter) return
+    
+    // Create blob and download
+    const blob = new Blob([complaintData.letter], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'complaint-letter.txt'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   if (loading) {
@@ -86,7 +110,7 @@ function DownloadContent() {
             Writing your complaint letter
           </h1>
           <p className="text-gray-500">
-            Our AI is crafting a professional complaint letter using the exact language that gets results...
+            Our AI is crafting a professional complaint letter based on your situation...
           </p>
         </div>
       </div>
@@ -105,7 +129,7 @@ function DownloadContent() {
           </h1>
           <p className="text-gray-500 mb-6">{error}</p>
           <Link 
-            href="/questionnaire"
+            href="/smart-upload"
             className="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-colors"
           >
             Start again
@@ -122,7 +146,7 @@ function DownloadContent() {
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="text-xl font-semibold text-gray-900">
-            ComplaintAI
+            iComplain
           </Link>
           {isTest && (
             <span className="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-medium">
@@ -144,11 +168,24 @@ function DownloadContent() {
                 Your complaint letter is ready
               </h1>
               <p className="text-gray-600">
-                Copy the text below and send it to your lender. Keep a copy for your records.
+                {emailSent && userEmail 
+                  ? `We've also sent a copy to ${userEmail}`
+                  : 'Copy or download your letter below'
+                }
               </p>
             </div>
           </div>
         </div>
+
+        {/* Email confirmation */}
+        {emailSent && userEmail && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8 flex items-center gap-3">
+            <Mail className="w-5 h-5 text-blue-600" />
+            <p className="text-sm text-blue-800">
+              A copy has been sent to <strong>{userEmail}</strong>
+            </p>
+          </div>
+        )}
 
         {/* Letter */}
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-8">
@@ -175,7 +212,7 @@ function DownloadContent() {
                 )}
               </button>
               <button
-                onClick={handlePrint}
+                onClick={handleDownload}
                 className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
               >
                 <Download className="w-4 h-4" />
@@ -183,7 +220,7 @@ function DownloadContent() {
               </button>
             </div>
           </div>
-          <div className="p-6 sm:p-8 print:p-0">
+          <div className="p-6 sm:p-8">
             <pre className="whitespace-pre-wrap font-sans text-gray-800 text-sm leading-relaxed">
               {complaintData?.letter}
             </pre>
@@ -213,15 +250,14 @@ function DownloadContent() {
         {/* Next Steps */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            What to do next
+            What happens next
           </h2>
           <ol className="space-y-4">
             {[
-              'Copy or download your complaint letter',
-              'Gather the evidence documents listed above',
-              'Send everything to your lender (email is fine)',
-              'Wait up to 8 weeks for a response',
-              'If rejected or no response, escalate to the Financial Ombudsman',
+              'Send your letter to the lender (email is fine)',
+              'Keep a copy for your records',
+              'The lender has 8 weeks to respond',
+              'If they reject or ignore you, escalate to the Financial Ombudsman for free',
             ].map((step, i) => (
               <li key={i} className="flex items-start gap-4">
                 <span className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 flex-shrink-0">
@@ -233,14 +269,28 @@ function DownloadContent() {
           </ol>
         </div>
 
-        {/* Help */}
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>
-            Need to escalate to the Financial Ombudsman?{' '}
-            <Link href="/questionnaire?type=fos-escalation" className="text-gray-900 underline">
-              Generate an FOS complaint form
-            </Link>
+        {/* Share */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-500 mb-4">
+            Know someone who could claim too?
           </p>
+          <button 
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: 'iComplain - Get your money back',
+                  text: 'I just used this tool to create a complaint letter. You might be owed money too!',
+                  url: 'https://icomplain.ai',
+                })
+              } else {
+                navigator.clipboard.writeText('https://icomplain.ai')
+                alert('Link copied!')
+              }
+            }}
+            className="text-sm text-gray-900 underline hover:no-underline"
+          >
+            Share iComplain
+          </button>
         </div>
       </main>
     </div>

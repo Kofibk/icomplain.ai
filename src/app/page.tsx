@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { ArrowRight, Check, Shield, Clock, ChevronDown, Star } from 'lucide-react'
+import { ArrowRight, Check, Shield, Clock, ChevronDown, Star, Upload, Brain, FileText } from 'lucide-react'
 
 const complaintTypes = [
   {
@@ -40,19 +40,19 @@ const complaintTypes = [
 ]
 
 const steps = [
-  { num: '1', title: 'Answer questions', desc: 'About your complaint' },
-  { num: '2', title: 'AI writes letter', desc: 'Professional & effective' },
-  { num: '3', title: 'Send it yourself', desc: 'Keep 100% of compensation' },
+  { num: '1', title: 'Upload & explain', desc: 'Documents, voice notes, anything', icon: Upload },
+  { num: '2', title: 'AI analyzes', desc: 'Identifies issues & builds your case', icon: Brain },
+  { num: '3', title: 'Get your letter', desc: 'Professional, ready to send', icon: FileText },
 ]
 
 const faqs = [
   {
     q: 'Is this a claims company?',
-    a: 'No. We\'re a document preparation service. You send the letter yourself and keep 100% of any compensation. Claims companies take 25-40%.',
+    a: 'No. We\'re a document preparation tool. You send the letter yourself and keep 100% of any compensation. Claims companies take 25-40%.',
   },
   {
     q: 'How does the AI know what to write?',
-    a: 'Our AI is trained on Financial Ombudsman decisions. It knows the exact arguments and language that lead to successful complaints.',
+    a: 'Our AI is trained on 170,000+ complaint decisions to understand which arguments and language lead to successful outcomes.',
   },
   {
     q: 'What if my complaint is rejected?',
@@ -61,6 +61,10 @@ const faqs = [
   {
     q: 'Is my data secure?',
     a: 'Yes. We use bank-level encryption and delete your data after 30 days.',
+  },
+  {
+    q: 'What can I upload?',
+    a: 'Anything relevant - finance agreements, bank statements, emails, screenshots, even voice notes explaining what happened. Our AI will extract the key details.',
   },
 ]
 
@@ -72,12 +76,12 @@ export default function HomePage() {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-lg z-50 border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <span className="text-xl font-semibold text-gray-900">ComplaintAI</span>
+          <span className="text-xl font-semibold text-gray-900">iComplain</span>
           <div className="flex items-center gap-6">
             <a href="#how" className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block">How it works</a>
             <a href="#pricing" className="text-sm text-gray-600 hover:text-gray-900 hidden sm:block">Pricing</a>
             <Link 
-              href="/questionnaire" 
+              href="/smart-upload" 
               className="bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-full hover:bg-gray-800 transition-colors"
             >
               Start claim
@@ -91,20 +95,20 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-sm font-medium px-4 py-2 rounded-full mb-8">
             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-            170,000+ FOS decisions analysed
+            AI-powered complaint intelligence
           </div>
           
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-gray-900 tracking-tight mb-6">
-            Get the compensation you're owed
+            Turn your evidence into a winning complaint
           </h1>
           
           <p className="text-lg sm:text-xl text-gray-500 mb-10 max-w-2xl mx-auto">
-            AI-powered complaint letters that use the exact language the Financial Ombudsman responds to. Ready in minutes.
+            Upload documents, explain what happened, and let our AI build your case. Professional complaint letters ready in minutes.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link 
-              href="/questionnaire" 
+              href="/smart-upload" 
               className="inline-flex items-center justify-center gap-2 bg-gray-900 text-white font-medium px-8 py-4 rounded-full hover:bg-gray-800 transition-all hover:scale-105"
             >
               Start your complaint
@@ -136,14 +140,14 @@ export default function HomePage() {
             What's your complaint about?
           </h2>
           <p className="text-gray-500 text-center mb-10">
-            Select your complaint type to get started
+            Or just upload your documents and let AI figure it out
           </p>
 
           <div className="grid sm:grid-cols-2 gap-4">
             {complaintTypes.map((type) => (
               <Link
                 key={type.id}
-                href={`/questionnaire?type=${type.id}`}
+                href={`/smart-upload?type=${type.id}`}
                 className="group bg-white rounded-2xl p-6 border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all"
               >
                 <div className="flex items-start justify-between mb-4">
@@ -194,15 +198,18 @@ export default function HomePage() {
       {/* How It Works */}
       <section id="how" className="py-16 px-4 bg-gray-50">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 text-center mb-12">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 text-center mb-4">
             How it works
           </h2>
+          <p className="text-gray-500 text-center mb-12 max-w-xl mx-auto">
+            No complicated forms. Just upload what you have and tell us what happened.
+          </p>
 
           <div className="grid sm:grid-cols-3 gap-8">
             {steps.map((step, i) => (
               <div key={i} className="text-center">
-                <div className="w-12 h-12 bg-gray-900 text-white rounded-full flex items-center justify-center text-lg font-semibold mx-auto mb-4">
-                  {step.num}
+                <div className="w-14 h-14 bg-gray-900 text-white rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <step.icon className="w-6 h-6" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-1">{step.title}</h3>
                 <p className="text-sm text-gray-500">{step.desc}</p>
@@ -245,24 +252,44 @@ export default function HomePage() {
             One payment. Keep 100% of your compensation.
           </p>
 
-          <div className="grid sm:grid-cols-4 gap-4 mb-8">
-            {[
-              { range: 'Up to £1k', price: '£29' },
-              { range: '£1k - £3k', price: '£49' },
-              { range: '£3k - £10k', price: '£79' },
-              { range: 'Over £10k', price: '£129' },
-            ].map((tier, i) => (
-              <div key={i} className="bg-gray-50 rounded-2xl p-6 text-center">
-                <p className="text-sm text-gray-500 mb-2">{tier.range}</p>
-                <p className="text-2xl font-semibold text-gray-900">{tier.price}</p>
-              </div>
-            ))}
+          <div className="max-w-md mx-auto bg-white rounded-3xl border-2 border-gray-900 p-8 text-center mb-8">
+            <p className="text-sm text-gray-500 mb-2">All complaint types</p>
+            <p className="text-5xl font-bold text-gray-900 mb-2">£29</p>
+            <p className="text-gray-500 mb-6">One-time payment</p>
+            <ul className="text-left space-y-3 mb-8">
+              <li className="flex items-center gap-3 text-sm text-gray-600">
+                <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                AI-generated complaint letter
+              </li>
+              <li className="flex items-center gap-3 text-sm text-gray-600">
+                <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                Personalised to your situation
+              </li>
+              <li className="flex items-center gap-3 text-sm text-gray-600">
+                <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                Correct legal references
+              </li>
+              <li className="flex items-center gap-3 text-sm text-gray-600">
+                <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                Ready to send immediately
+              </li>
+              <li className="flex items-center gap-3 text-sm text-gray-600">
+                <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                Email & download delivery
+              </li>
+            </ul>
+            <Link 
+              href="/smart-upload" 
+              className="block w-full bg-gray-900 text-white font-medium py-4 rounded-full hover:bg-gray-800 transition-colors"
+            >
+              Get started
+            </Link>
           </div>
 
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
             <p className="text-amber-800">
               <span className="font-semibold">Claims companies charge 25-40%.</span>
-              {' '}On a £1,000 claim, that's £250-400. With us, you pay £29-49.
+              {' '}On a £1,000 claim, that's £250-400. You pay £29, keep the rest.
             </p>
           </div>
         </div>
@@ -308,10 +335,10 @@ export default function HomePage() {
             Ready to get your money back?
           </h2>
           <p className="text-gray-500 mb-8">
-            Takes about 8 minutes. No account needed.
+            Upload your documents and let AI do the heavy lifting.
           </p>
           <Link 
-            href="/questionnaire" 
+            href="/smart-upload" 
             className="inline-flex items-center justify-center gap-2 bg-gray-900 text-white font-medium px-8 py-4 rounded-full hover:bg-gray-800 transition-all hover:scale-105"
           >
             Start your complaint
@@ -325,17 +352,17 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid sm:grid-cols-4 gap-8 mb-8">
             <div>
-              <span className="font-semibold text-gray-900">ComplaintAI</span>
+              <span className="font-semibold text-gray-900">iComplain</span>
               <p className="text-sm text-gray-500 mt-2">
-                Document preparation service. Not a claims company.
+                Document preparation tool. Not a claims company.
               </p>
             </div>
             <div>
               <p className="font-medium text-gray-900 mb-3">Complaints</p>
               <ul className="space-y-2 text-sm text-gray-500">
-                <li><Link href="/questionnaire?type=pcp" className="hover:text-gray-900">Car Finance</Link></li>
-                <li><Link href="/questionnaire?type=section75" className="hover:text-gray-900">Credit Card</Link></li>
-                <li><Link href="/questionnaire?type=unaffordable" className="hover:text-gray-900">Unaffordable Lending</Link></li>
+                <li><Link href="/smart-upload?type=pcp" className="hover:text-gray-900">Car Finance</Link></li>
+                <li><Link href="/smart-upload?type=section75" className="hover:text-gray-900">Credit Card</Link></li>
+                <li><Link href="/smart-upload?type=unaffordable" className="hover:text-gray-900">Unaffordable Lending</Link></li>
               </ul>
             </div>
             <div>
@@ -355,7 +382,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-200 pt-8 text-center text-sm text-gray-500">
-            © {new Date().getFullYear()} ComplaintAI. Not legal advice.
+            © {new Date().getFullYear()} iComplain. Document preparation tool - not legal advice.
           </div>
         </div>
       </footer>
