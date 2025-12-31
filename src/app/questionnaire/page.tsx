@@ -12,12 +12,56 @@ import {
 } from '@/lib/complaint-engine'
 import { searchProviders } from '@/lib/data/providers'
 
+// Personal details questions - shown at START of every complaint
+const PERSONAL_DETAILS_QUESTIONS = [
+  {
+    id: 'your_name',
+    question: 'What is your full name?',
+    type: 'text',
+    required: true,
+    placeholder: 'As it appears on your account',
+    helpText: 'This will appear on your complaint letter',
+  },
+  {
+    id: 'your_address',
+    question: 'What is your address?',
+    type: 'textarea',
+    required: true,
+    placeholder: '123 Example Street\nTown\nPostcode',
+    helpText: 'Your current address',
+  },
+  {
+    id: 'your_email',
+    question: 'What is your email address?',
+    type: 'email',
+    required: true,
+    placeholder: 'you@example.com',
+  },
+  {
+    id: 'your_phone',
+    question: 'What is your phone number?',
+    type: 'text',
+    required: false,
+    placeholder: '07123 456789',
+    helpText: 'Optional - but useful if they need to contact you',
+  },
+  {
+    id: 'account_reference',
+    question: 'What is your account or reference number?',
+    type: 'text',
+    required: false,
+    placeholder: 'Account number, policy number, agreement number...',
+    helpText: 'Check your statements or agreement. Leave blank if you don\'t have it.',
+  },
+]
+
 // Freeform complaint config for "tell us what happened"
 const FREEFORM_CONFIG = {
   id: 'freeform',
   title: 'Tell us what happened',
   subtitle: 'Describe your complaint in your own words',
   questions: [
+    ...PERSONAL_DETAILS_QUESTIONS,
     {
       id: 'firm_name',
       question: 'Which company is your complaint about?',
@@ -202,7 +246,13 @@ function QuestionnaireContent() {
 
   const config = useMemo(() => {
     if (isFreeform) return FREEFORM_CONFIG
-    return COMPLAINT_CONFIGS[complaintType as keyof typeof COMPLAINT_CONFIGS]
+    const baseConfig = COMPLAINT_CONFIGS[complaintType as keyof typeof COMPLAINT_CONFIGS]
+    if (!baseConfig) return null
+    // Prepend personal details to all complaint types
+    return {
+      ...baseConfig,
+      questions: [...PERSONAL_DETAILS_QUESTIONS, ...baseConfig.questions],
+    }
   }, [complaintType, isFreeform])
   
   const [currentStep, setCurrentStep] = useState(0)
@@ -306,6 +356,18 @@ function QuestionnaireContent() {
         return (
           <input
             type="text"
+            value={value}
+            onChange={(e) => handleAnswer(e.target.value)}
+            placeholder={q.placeholder}
+            autoFocus
+            className="w-full px-5 py-4 bg-white/[0.03] border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-white/30 text-lg"
+          />
+        )
+
+      case 'email':
+        return (
+          <input
+            type="email"
             value={value}
             onChange={(e) => handleAnswer(e.target.value)}
             placeholder={q.placeholder}

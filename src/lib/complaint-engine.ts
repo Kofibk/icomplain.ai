@@ -983,7 +983,7 @@ export function calculateSuccessRate(
 
 // =============================================================================
 // LETTER GENERATOR PROMPT BUILDER
-// Builds optimized prompts based on FOS research
+// Builds optimized prompts based on FOS research - generates letters with NO blanks
 // =============================================================================
 
 export function buildLetterPrompt(
@@ -993,11 +993,12 @@ export function buildLetterPrompt(
   vulnerabilities: string[]
 ): string {
   const config = COMPLAINT_CONFIGS[complaintType as keyof typeof COMPLAINT_CONFIGS]
-  if (!config) return ''
   
   // Build facts section from answers
   const facts: string[] = []
-  for (const question of config.questions) {
+  const allQuestions = config ? config.questions : []
+  
+  for (const question of allQuestions) {
     const answer = answers[question.id]
     if (!answer) continue
     
@@ -1020,41 +1021,117 @@ export function buildLetterPrompt(
   
   // Build vulnerability statement
   const vulnLabels = vulnerabilities.map(v => (SUCCESS_FACTORS.vulnerability as any)[v]?.label).filter(Boolean)
-  
+
+  // Personal details
+  const personalDetails = {
+    name: answers.your_name || '[NAME NOT PROVIDED]',
+    address: answers.your_address || '[ADDRESS NOT PROVIDED]',
+    email: answers.your_email || '',
+    phone: answers.your_phone || '',
+    accountRef: answers.account_reference || '',
+  }
+
+  // Calculate distress amount based on vulnerability and evidence
+  let suggestedDistress = 150 // Base amount
+  if (vulnLabels.length > 0) suggestedDistress += 150
+  if (vulnLabels.length > 2) suggestedDistress += 150
+  if (evidenceLabels.length > 2) suggestedDistress += 100
+  suggestedDistress = Math.min(suggestedDistress, 500) // Cap at £500 for typical cases
+
   return `
-COMPLAINT TYPE: ${config.title}
-REGULATIONS TO CITE: ${config.regulations.primary} (primary), ${config.regulations.secondary.join(', ')} (secondary)
-${(config.regulations as any).caselaw ? `RELEVANT CASE LAW: ${(config.regulations as any).caselaw.join(', ')}` : ''}
+You are generating a formal complaint letter for a UK consumer to send to a financial services firm.
 
-CONSUMER'S SITUATION:
-${facts.map(f => `- ${f}`).join('\n')}
+=== CONSUMER'S PERSONAL DETAILS ===
+Full Name: ${personalDetails.name}
+Address: ${personalDetails.address}
+Email: ${personalDetails.email}
+Phone: ${personalDetails.phone}
+Account/Reference: ${personalDetails.accountRef || 'Not provided'}
 
-EVIDENCE PROVIDED: ${evidenceLabels.length > 0 ? evidenceLabels.join(', ') : 'None attached'}
-VULNERABILITY FACTORS: ${vulnLabels.length > 0 ? vulnLabels.join(', ') : 'None declared'}
+=== COMPLAINT DETAILS ===
+Complaint Type: ${config?.title || 'General Financial Complaint'}
+Firm: ${answers.lender || answers.provider || answers.bank || answers.card_provider || answers.firm_name || '[FIRM NAME]'}
 
-LETTER TEMPLATE FRAMEWORK:
-- BREACH: ${config.letterTemplate.breach}
-- REGULATION: ${config.letterTemplate.regulation}
-- HARM: ${config.letterTemplate.harm}
-- REMEDY SOUGHT: ${config.letterTemplate.remedy}
+=== CONSUMER'S ANSWERS ===
+${facts.map(f => `• ${f}`).join('\n')}
 
-Generate a formal complaint letter following the optimal FOS success structure:
-1. HEADER: Clear "FORMAL COMPLAINT" marking, date, reference numbers
-2. OPENING: 2-sentence summary of complaint and desired outcome
-3. FACTS: Chronological timeline with specific dates and amounts
-4. BREACH: Reference specific regulations (cite by number) - keep brief, don't over-quote
-5. HARM: Financial loss (quantified) and distress/inconvenience caused
-6. REMEDY: Specific amounts sought, calculation basis, credit file correction if relevant
-7. DEADLINE: 8 weeks to respond, FOS escalation warning
+=== SUPPORTING INFORMATION ===
+Evidence consumer has: ${evidenceLabels.length > 0 ? evidenceLabels.join(', ') : 'None specified'}
+Vulnerability circumstances: ${vulnLabels.length > 0 ? vulnLabels.join(', ') : 'None disclosed'}
 
-CRITICAL RULES:
-- Use "I believe" and "In my view" - never definitive claims
-- Reference regulations by number but don't quote lengthy passages
-- Be factual and specific - use actual dates and amounts provided
-- Keep it professional but accessible - avoid unnecessary legal jargon
-- Include vulnerability statement if factors provided (FCA requires firms to consider this)
-- Standard 8% statutory interest on refund amounts
-- Distress & inconvenience claim if appropriate (typically £100-500)
+=== REGULATIONS TO REFERENCE ===
+${config ? `Primary: ${config.regulations.primary}
+Secondary: ${config.regulations.secondary.join(', ')}
+${(config.regulations as any).caselaw ? `Case Law: ${(config.regulations as any).caselaw.join(', ')}` : ''}` : 'FCA Principle 6 (Treating Customers Fairly), DISP 1.4'}
+
+=== LETTER STRUCTURE (MUST FOLLOW EXACTLY) ===
+
+**FORMAL COMPLAINT**
+
+[Today's Date: ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}]
+
+[Firm Name]
+Complaints Department
+
+**Re: [Product Type] - [Account Reference if provided]**
+
+Dear Complaints Team,
+
+[ONE SENTENCE: What happened] [ONE SENTENCE: What I am seeking]
+
+---
+
+**What Happened**
+
+[Write 2-4 paragraphs in CHRONOLOGICAL ORDER as PROSE (not bullets). Use the consumer's answers to tell the story. Include specific dates, amounts, and circumstances. Write in first person as the consumer.]
+
+---
+
+**Why I Believe This Was Wrong**
+
+[1-2 paragraphs explaining the breach. Use "I believe" and "In my view". Reference regulations by number briefly - do NOT quote lengthy passages. If vulnerability disclosed, mention FCA FG21/1.]
+
+---
+
+**The Impact on Me**
+
+**Financial:** [Quantify the loss - use actual figures from answers]
+
+**Personal:** [Describe distress based on answers and circumstances - be specific, not generic]
+
+---
+
+**What I Am Asking For**
+
+1. [Primary remedy - refund/compensation amount from answers]
+2. Plus 8% simple interest from [relevant date] to settlement
+3. £${suggestedDistress} for distress and inconvenience
+4. [If applicable: Correction of credit file]
+
+**Total sought: [Calculate and show total]**
+
+---
+
+I expect your final response within 8 weeks. If I remain dissatisfied, I understand I can refer this matter to the Financial Ombudsman Service.
+
+Yours faithfully,
+
+${personalDetails.name}
+${personalDetails.address}
+${personalDetails.email}${personalDetails.phone ? '\n' + personalDetails.phone : ''}
+
+=== CRITICAL RULES ===
+1. NEVER use [INSERT X] or [PLACEHOLDER] - write the actual content using the information provided
+2. If information is missing, write around it naturally - don't leave blanks
+3. Write in first person as the consumer
+4. Use "I believe" and "In my view" - never definitive legal claims
+5. Keep regulations brief - cite by number, don't quote lengthy passages
+6. Chronological prose in the facts section - NO bullet points
+7. Be specific with dates and amounts - use what was provided
+8. Professional but accessible tone - avoid unnecessary jargon
+9. If vulnerability was disclosed, weave it into the narrative naturally and reference FCA FG21/1
+10. Calculate 8% interest if dates and amounts are available
+11. The letter must be READY TO SEND - no editing required by the consumer
 `
 }
 
