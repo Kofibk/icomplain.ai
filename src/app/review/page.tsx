@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Edit2, Loader2, FileText, Download, Mail, Check, AlertCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Edit2, Loader2, FileText, Download, Mail, Check, AlertCircle } from 'lucide-react'
 
 interface ComplaintData {
   type: string
