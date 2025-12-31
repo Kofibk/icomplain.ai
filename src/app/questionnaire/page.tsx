@@ -1,16 +1,13 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import AutocompleteInput from '@/components/AutocompleteInput'
 import MultiSelect from '@/components/MultiSelect'
 import FileUpload from '@/components/FileUpload'
-import { 
-  getQuestionnaireConfig, 
-  Question 
-} from '@/lib/questionnaire-config'
+import { getQuestionnaireConfig } from '@/lib/questionnaire-config'
 import { 
   searchProviders, 
   searchCarMakes,
@@ -22,7 +19,7 @@ function QuestionnaireContent() {
   const searchParams = useSearchParams()
   const complaintType = searchParams.get('type') || 'other'
 
-  const [config, setConfig] = useState(getQuestionnaireConfig(complaintType))
+  const config = useMemo(() => getQuestionnaireConfig(complaintType), [complaintType])
   const [currentStep, setCurrentStep] = useState(0)
   const [answers, setAnswers] = useState<Record<string, any>>({})
   const [files, setFiles] = useState<File[]>([])
