@@ -4,116 +4,111 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronDown, ArrowRight, Check } from 'lucide-react'
 
-// Top 5 most common complaints + Other
+// Top 5 financial complaints + Other
 const topComplaints = [
   {
     id: 'car-finance',
     title: 'Mis-sold car finance?',
-    subtitle: 'Hidden commission, unfair deal',
+    subtitle: 'Hidden commission on PCP/HP',
     amount: 'Avg. £1,100 back',
     icon: '🚗',
     gradient: 'from-violet-500 to-purple-600',
-    examples: ['PCP deal', 'HP agreement', 'Secret fees'],
-  },
-  {
-    id: 'faulty-goods',
-    title: 'Product broke or faulty?',
-    subtitle: 'TV, phone, appliance, anything',
-    amount: 'Full refund',
-    icon: '📦',
-    gradient: 'from-blue-500 to-cyan-500',
-    examples: ['Faulty electronics', 'Broken appliance', 'Not as described'],
+    tag: 'Popular',
+    examples: ['Secret commission', 'No rate options', 'DCA period'],
   },
   {
     id: 'bank-fraud',
-    title: 'Scammed & bank won\'t help?',
-    subtitle: 'Get your money back',
+    title: 'Scammed & bank won\'t refund?',
+    subtitle: 'New rules mean they should pay',
     amount: 'Avg. £3,000 back',
     icon: '🚨',
     gradient: 'from-rose-500 to-pink-600',
-    examples: ['APP fraud', 'Impersonation', 'Romance scam'],
+    tag: 'New rules',
+    examples: ['APP fraud', 'Impersonation', 'Investment scam'],
   },
   {
     id: 'credit-card',
-    title: 'Credit card problems?',
-    subtitle: 'Unaffordable limits, charges',
+    title: 'Given credit you couldn\'t afford?',
+    subtitle: 'Limits increased without checks',
     amount: 'Up to £5,000',
     icon: '💳',
-    gradient: 'from-amber-500 to-orange-500',
-    examples: ['Limit increased unfairly', 'Couldn\'t afford it', 'Fees'],
+    gradient: 'from-blue-500 to-cyan-500',
+    tag: null,
+    examples: ['Auto limit increase', 'No affordability check', 'Debt spiral'],
   },
   {
-    id: 'energy',
-    title: 'Energy bill dispute?',
-    subtitle: 'Wrong bill, overcharged',
-    amount: 'Bill corrected + £',
-    icon: '⚡',
+    id: 'unaffordable-loan',
+    title: 'Loan you should never have had?',
+    subtitle: 'Irresponsible lending',
+    amount: 'Up to £5,000',
+    icon: '💷',
+    gradient: 'from-amber-500 to-orange-500',
+    tag: null,
+    examples: ['Multiple loans', 'Already in debt', 'Payday lenders'],
+  },
+  {
+    id: 'section-75',
+    title: 'Paid by card, got nothing?',
+    subtitle: 'Section 75 protection',
+    amount: '£100 - £30,000',
+    icon: '🛡️',
     gradient: 'from-emerald-500 to-teal-500',
-    examples: ['Bill too high', 'Back-billing', 'Smart meter issues'],
+    tag: null,
+    examples: ['Company bust', 'Never delivered', 'Goods faulty'],
   },
   {
     id: 'other',
-    title: 'Something else?',
-    subtitle: 'Any consumer complaint',
+    title: 'Other financial complaint?',
+    subtitle: 'Insurance, investments, mortgages...',
     amount: 'We can help',
     icon: '📝',
     gradient: 'from-gray-500 to-gray-600',
-    examples: ['Insurance', 'Travel', 'Telecoms', 'Anything'],
+    tag: null,
+    examples: ['Insurance claim', 'Pension mis-sold', 'Unfair charges'],
     isOther: true,
   },
 ]
 
-const allComplaintTypes = [
-  { id: 'car-finance', label: 'Car finance / PCP / HP', icon: '🚗' },
-  { id: 'credit-card', label: 'Credit card', icon: '💳' },
-  { id: 'bank-fraud', label: 'Bank fraud / scams', icon: '🚨' },
-  { id: 'unaffordable-loan', label: 'Loans / debt', icon: '💷' },
-  { id: 'section-75', label: 'Section 75 (card protection)', icon: '🛡️' },
-  { id: 'insurance', label: 'Insurance', icon: '🛡️' },
-  { id: 'energy', label: 'Energy (gas/electric)', icon: '⚡' },
-  { id: 'telecoms', label: 'Phone / broadband / TV', icon: '📱' },
-  { id: 'faulty-goods', label: 'Faulty products', icon: '📦' },
-  { id: 'travel', label: 'Travel / flights / holidays', icon: '✈️' },
-  { id: 'other', label: 'Something else', icon: '📝' },
-]
-
 const commonProblems = [
-  'My TV broke after 3 months and they won\'t refund me',
-  'I was charged hidden fees on my car finance',
-  'My energy bill is wrong and they won\'t fix it',
-  'I got scammed and my bank is refusing to help',
-  'I bought something online and it never arrived',
-  'My insurance claim was rejected unfairly',
+  'My car dealer never told me about commission',
+  'I was given a credit card I couldn\'t afford',
+  'I got scammed and my bank won\'t refund me',
+  'They kept lending to me when I was already in debt',
   'The company went bust and I lost my money',
-  'They keep calling me about a debt I don\'t owe',
+  'My insurance claim was rejected unfairly',
+  'I was mis-sold a pension',
+  'They put a default on my credit file wrongly',
 ]
 
 const faqs = [
   {
     q: 'What kind of complaints can you help with?',
-    a: 'Almost anything! Banks, lenders, shops, energy companies, phone providers, insurance, travel companies... if a company has treated you unfairly, we can help you write a proper complaint.',
+    a: 'Any complaint against an FCA-regulated financial firm: banks, lenders, credit card companies, car finance providers, insurers, investment firms, and more. If it\'s financial services, we can help.',
   },
   {
     q: 'How much does it cost?',
     a: '£29 flat fee for your personalised complaint letter. Unlike claims companies who take 25-40% of your payout, you keep 100% of any compensation you receive.',
   },
   {
+    q: 'What makes your letters better than a template?',
+    a: 'Our AI analyses your specific situation and writes a letter citing the exact regulations that apply to your case. We\'ve studied 170,000+ Financial Ombudsman decisions to know what works.',
+  },
+  {
     q: 'Do I need any documents?',
-    a: 'Not essential. We can create your letter based on what you remember. But if you have receipts, statements, or emails from the company, they can help strengthen your case.',
+    a: 'Not essential. We can create your letter based on what you remember. But if you have your agreement, statements, or correspondence, they help strengthen your case.',
   },
   {
     q: 'What happens after I send the complaint?',
-    a: 'The company usually has 8 weeks to respond. If they don\'t resolve it, you can escalate to the relevant Ombudsman for free. We tell you which one and how.',
+    a: 'The firm has 8 weeks to send a Final Response. If they reject you or don\'t respond, you can escalate to the Financial Ombudsman Service (FOS) for free - we include guidance on how.',
   },
   {
     q: 'Is this a claims company?',
-    a: 'No. We\'re a document preparation service. We help you write your complaint - you send it yourself and keep 100% of any money you get back.',
+    a: 'No. We\'re a document preparation service. We help you write your complaint - you send it yourself and keep 100% of any money you get back. We\'re not FCA regulated because we don\'t manage your claim.',
   },
 ]
 
 export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-  const [showAllTypes, setShowAllTypes] = useState(false)
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white antialiased">
@@ -145,18 +140,18 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full text-sm mb-8">
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-            <span className="text-white/70">Helped thousands get their money back</span>
+            <span className="text-white/70">£8bn car finance payout underway</span>
           </div>
           
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-semibold tracking-tight leading-[1.1] mb-6">
-            Been treated unfairly?
+            Been treated unfairly
             <br />
-            <span className="text-white/40">Fight back.</span>
+            <span className="text-white/40">by a bank or lender?</span>
           </h1>
           
           <p className="text-xl text-white/60 max-w-xl mb-10 leading-relaxed">
-            Whether it's a broken product, a dodgy deal, or a company that won't help - 
-            we write the complaint letter that gets results. 5 minutes. £29. Keep everything you get back.
+            Get the money you're owed. Professional complaint letters in 5 minutes. 
+            Keep 100% of your compensation—no claims company taking a cut.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -177,7 +172,7 @@ export default function HomePage() {
                 <Link
                   key={i}
                   href="#complaints"
-                  className="flex-shrink-0 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-4 py-2 text-sm text-white/70 hover:text-white transition-colors"
+                  className="flex-shrink-0 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-4 py-2 text-sm text-white/70 hover:text-white transition-colors whitespace-nowrap"
                 >
                   "{problem}"
                 </Link>
@@ -192,11 +187,11 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto grid grid-cols-3 gap-8">
           <div className="text-center">
             <div className="text-3xl font-semibold mb-1">170K+</div>
-            <div className="text-sm text-white/40">Cases analysed</div>
+            <div className="text-sm text-white/40">FOS cases analysed</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-semibold mb-1">75%</div>
-            <div className="text-sm text-white/40">Average success rate</div>
+            <div className="text-sm text-white/40">FOS overturn rate</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-semibold mb-1">100%</div>
@@ -205,13 +200,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Complaint types - Top 5 + Other */}
+      {/* Complaint types */}
       <section id="complaints" className="py-20 px-6 scroll-mt-20">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-semibold tracking-tight mb-4">What's your complaint about?</h2>
-          <p className="text-white/50 mb-10">Pick the closest match - or choose "Something else"</p>
+          <p className="text-white/50 mb-10">Choose the closest match—or select "Other" for any financial complaint</p>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {topComplaints.map((type) => (
               <Link
                 key={type.id}
@@ -222,6 +217,11 @@ export default function HomePage() {
                     : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/10 hover:border-white/20'
                 }`}
               >
+                {type.tag && (
+                  <span className="absolute top-4 right-4 text-xs bg-white/10 px-2 py-1 rounded-full">
+                    {type.tag}
+                  </span>
+                )}
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${type.gradient} mb-4 flex items-center justify-center text-2xl`}>
                   {type.icon}
                 </div>
@@ -243,33 +243,6 @@ export default function HomePage() {
               </Link>
             ))}
           </div>
-
-          {/* Show all types */}
-          <div className="text-center">
-            <button
-              onClick={() => setShowAllTypes(!showAllTypes)}
-              className="inline-flex items-center gap-2 text-white/50 hover:text-white text-sm transition-colors"
-            >
-              {showAllTypes ? 'Show less' : 'See all complaint types'}
-              <ChevronDown className={`w-4 h-4 transition-transform ${showAllTypes ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
-
-          {showAllTypes && (
-            <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {allComplaintTypes.map((type) => (
-                <Link
-                  key={type.id}
-                  href={`/questionnaire?type=${type.id}`}
-                  className="flex items-center gap-3 p-4 bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-white/20 rounded-xl transition-all"
-                >
-                  <span className="text-xl">{type.icon}</span>
-                  <span className="text-white/80">{type.label}</span>
-                  <ArrowRight className="w-4 h-4 text-white/20 ml-auto" />
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
@@ -283,17 +256,17 @@ export default function HomePage() {
               {
                 step: '01',
                 title: 'Tell us what happened',
-                desc: 'Answer simple questions. No legal jargon - just tell us your story in plain English.',
+                desc: 'Answer simple questions about your situation. No legal jargon—just tell us what went wrong.',
               },
               {
                 step: '02',
                 title: 'We write your complaint',
-                desc: 'Our AI creates a professional letter citing the right laws and regulations for your case.',
+                desc: 'Our AI creates a professional letter citing the exact regulations and arguments that work.',
               },
               {
                 step: '03',
-                title: 'Send it & get results',
-                desc: 'Email or post your letter. Most companies respond within 8 weeks. You keep 100% of any payout.',
+                title: 'Send it & get paid',
+                desc: 'Email your letter to the firm. They have 8 weeks to respond. You keep 100% of any payout.',
               },
             ].map((item) => (
               <div key={item.step} className="relative">
@@ -310,7 +283,7 @@ export default function HomePage() {
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-semibold tracking-tight mb-12 text-center">
-            Why do it yourself?
+            Why not use a claims company?
           </h2>
           
           <div className="grid md:grid-cols-2 gap-6">
@@ -339,7 +312,7 @@ export default function HomePage() {
                 {[
                   '£29 flat fee - that\'s it',
                   'Keep 100% of your money',
-                  'Letter written for YOUR situation',
+                  'Letter written for YOUR case',
                   'Ready in 5 minutes',
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
@@ -368,17 +341,17 @@ export default function HomePage() {
             ))}
           </div>
           <blockquote className="text-2xl sm:text-3xl font-medium leading-relaxed mb-8">
-            "My washing machine broke after 4 months. Currys wouldn't help. 
-            iComplain wrote me a letter and I got a full refund.
-            <span className="text-white/40"> Took 10 minutes.</span>"
+            "Black Horse never told me about commission on my car finance. 
+            iComplain wrote my letter and I got £2,400 back.
+            <span className="text-white/40"> Best £29 I ever spent.</span>"
           </blockquote>
           <div className="flex items-center justify-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center text-sm font-medium">
-              SK
+            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-sm font-medium">
+              JT
             </div>
             <div className="text-left">
-              <div className="font-medium">Sarah K.</div>
-              <div className="text-sm text-white/40">Faulty goods complaint</div>
+              <div className="font-medium">James T.</div>
+              <div className="text-sm text-white/40">Car finance complaint</div>
             </div>
           </div>
         </div>
@@ -416,10 +389,10 @@ export default function HomePage() {
       <section className="py-24 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight mb-6">
-            Ready to fight back?
+            Ready to get your money back?
           </h2>
           <p className="text-white/50 mb-10 text-lg">
-            5 minutes. £29. Keep 100% of what you get back.
+            5 minutes. £29. Keep 100% of what you're owed.
           </p>
           <Link
             href="#complaints"
@@ -444,7 +417,7 @@ export default function HomePage() {
             </div>
           </div>
           <p className="mt-8 text-xs text-white/30 text-center max-w-xl mx-auto">
-            iComplain is a document preparation service. We help you write complaints—we don't provide legal advice or guarantee outcomes. 
+            iComplain is a document preparation service. We help you write complaints against FCA-regulated firms—we don't provide legal advice or guarantee outcomes. 
             Not a law firm or claims management company.
           </p>
         </div>
