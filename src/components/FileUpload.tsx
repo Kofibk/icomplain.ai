@@ -1,126 +1,77 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
-import { Upload, File, X, Check, Loader2 } from 'lucide-react'
+import { useRef } from 'react'
+import { Upload, X, FileText } from 'lucide-react'
 
 interface FileUploadProps {
   files: File[]
   onChange: (files: File[]) => void
   helpText?: string
-  accept?: string
-  maxFiles?: number
+  dark?: boolean
 }
 
-export default function FileUpload({
-  files,
-  onChange,
-  helpText = 'Drag and drop files here, or click to browse',
-  accept = '.pdf,.jpg,.jpeg,.png,.doc,.docx',
-  maxFiles = 5,
-}: FileUploadProps) {
-  const [isDragging, setIsDragging] = useState(false)
+export default function FileUpload({ files, onChange, helpText, dark = false }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }, [])
+  const handleFiles = (newFiles: FileList | null) => {
+    if (!newFiles) return
+    const fileArray = Array.from(newFiles)
+    const validFiles = fileArray.filter(f => 
+      f.size <= 10 * 1024 * 1024 && 
+      ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(f.type)
+    )
+    onChange([...files, ...validFiles])
+  }
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }, [])
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    
-    const droppedFiles = Array.from(e.dataTransfer.files)
-    const newFiles = [...files, ...droppedFiles].slice(0, maxFiles)
-    onChange(newFiles)
-  }, [files, onChange, maxFiles])
-
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const selectedFiles = Array.from(e.target.files)
-      const newFiles = [...files, ...selectedFiles].slice(0, maxFiles)
-      onChange(newFiles)
-    }
-  }, [files, onChange, maxFiles])
-
-  const removeFile = useCallback((index: number) => {
-    const newFiles = files.filter((_, i) => i !== index)
-    onChange(newFiles)
-  }, [files, onChange])
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B'
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  const removeFile = (index: number) => {
+    onChange(files.filter((_, i) => i !== index))
   }
 
   return (
-    <div className="space-y-4">
-      {/* Drop zone */}
+    <div className="space-y-3">
       <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className={`drop-zone border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-          isDragging
-            ? 'border-green-500 bg-green-50 dragging'
-            : 'border-gray-300 hover:border-gray-400 bg-gray-50'
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => { e.preventDefault(); handleFiles(e.dataTransfer.files) }}
+        className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
+          dark
+            ? 'border-white/10 hover:border-white/20 bg-white/[0.02]'
+            : 'border-gray-200 hover:border-gray-300 bg-gray-50'
         }`}
       >
+        <Upload className={`w-8 h-8 mx-auto mb-2 ${dark ? 'text-white/30' : 'text-gray-400'}`} />
+        <p className={`text-sm ${dark ? 'text-white/50' : 'text-gray-600'}`}>
+          Click or drag files here
+        </p>
+        {helpText && (
+          <p className={`text-xs mt-1 ${dark ? 'text-white/30' : 'text-gray-400'}`}>{helpText}</p>
+        )}
         <input
           ref={inputRef}
           type="file"
           multiple
-          accept={accept}
-          onChange={handleChange}
+          accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
+          onChange={(e) => handleFiles(e.target.files)}
           className="hidden"
         />
-        <Upload className={`w-10 h-10 mx-auto mb-4 ${isDragging ? 'text-green-600' : 'text-gray-400'}`} />
-        <p className={`font-medium ${isDragging ? 'text-green-900' : 'text-gray-700'}`}>
-          {isDragging ? 'Drop files here' : 'Drag and drop files here'}
-        </p>
-        <p className="text-sm text-gray-500 mt-1">or click to browse</p>
-        <p className="text-xs text-gray-400 mt-2">{helpText}</p>
       </div>
 
-      {/* File list */}
       {files.length > 0 && (
-        <ul className="space-y-2">
-          {files.map((file, index) => (
-            <li
-              key={`${file.name}-${index}`}
-              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-            >
-              <File className="w-5 h-5 text-gray-400 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-              </div>
+        <div className="space-y-2">
+          {files.map((file, i) => (
+            <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${dark ? 'bg-white/5' : 'bg-gray-100'}`}>
+              <FileText className={`w-5 h-5 ${dark ? 'text-white/40' : 'text-gray-500'}`} />
+              <span className={`flex-1 text-sm truncate ${dark ? 'text-white/70' : 'text-gray-700'}`}>{file.name}</span>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  removeFile(index)
-                }}
-                className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                onClick={() => removeFile(i)}
+                className={dark ? 'text-white/40 hover:text-white/70' : 'text-gray-400 hover:text-gray-600'}
               >
                 <X className="w-4 h-4" />
               </button>
-            </li>
+            </div>
           ))}
-        </ul>
-      )}
-
-      {files.length > 0 && files.length < maxFiles && (
-        <p className="text-xs text-gray-400 text-center">
-          {maxFiles - files.length} more file{maxFiles - files.length !== 1 ? 's' : ''} allowed
-        </p>
+        </div>
       )}
     </div>
   )
