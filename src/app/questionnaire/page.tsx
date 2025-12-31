@@ -3,66 +3,145 @@
 import { useState, Suspense, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, Loader2, Check, AlertCircle, TrendingUp, Shield, Info } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Loader2, Check, AlertCircle, Info, Shield, Upload } from 'lucide-react'
 import AutocompleteInput from '@/components/AutocompleteInput'
 import FileUpload from '@/components/FileUpload'
 import { 
   COMPLAINT_CONFIGS,
   SUCCESS_FACTORS,
-  calculateSuccessRate,
 } from '@/lib/complaint-engine'
 import { searchProviders } from '@/lib/data/providers'
 
-function SuccessIndicator({ rate, factors }: { 
-  rate: number
-  factors: { factor: string; impact: number; positive: boolean }[]
-}) {
-  const getColor = () => {
-    if (rate >= 70) return 'text-emerald-400'
-    if (rate >= 50) return 'text-amber-400'
-    return 'text-rose-400'
-  }
-  
-  const getBarColor = () => {
-    if (rate >= 70) return 'bg-emerald-500'
-    if (rate >= 50) return 'bg-amber-500'
-    return 'bg-rose-500'
-  }
+// Freeform complaint config for "tell us what happened"
+const FREEFORM_CONFIG = {
+  id: 'freeform',
+  title: 'Tell us what happened',
+  subtitle: 'Describe your complaint in your own words',
+  questions: [
+    {
+      id: 'firm_name',
+      question: 'Which company is your complaint about?',
+      type: 'autocomplete',
+      autocompleteType: 'all',
+      required: true,
+      placeholder: 'Start typing the company name...',
+      helpText: 'The bank, lender, or financial firm',
+    },
+    {
+      id: 'what_happened',
+      question: 'What happened?',
+      type: 'textarea',
+      required: true,
+      placeholder: 'Describe what happened in your own words. Include dates, amounts, and any other relevant details...',
+      helpText: 'Take your time. The more detail you provide, the more comprehensive your complaint letter will be.',
+    },
+    {
+      id: 'what_wrong',
+      question: 'What do you believe went wrong?',
+      type: 'textarea',
+      required: true,
+      placeholder: 'Explain why you think the company acted unfairly or incorrectly...',
+    },
+    {
+      id: 'resolution',
+      question: 'What outcome are you looking for?',
+      type: 'textarea',
+      required: true,
+      placeholder: 'What would you like the company to do to resolve this?',
+    },
+    {
+      id: 'amount_involved',
+      question: 'Is there a specific amount of money involved?',
+      type: 'currency',
+      required: false,
+      placeholder: 'e.g. 2000',
+      helpText: 'If applicable',
+    },
+    {
+      id: 'complained_before',
+      question: 'Have you already complained to the company?',
+      type: 'select',
+      required: true,
+      options: [
+        { value: 'no', label: 'No, this is my first complaint' },
+        { value: 'yes_no_response', label: 'Yes, but no response' },
+        { value: 'yes_rejected', label: 'Yes, they rejected my complaint' },
+        { value: 'yes_partial', label: 'Yes, they offered something but I\'m not satisfied' },
+      ],
+    },
+  ],
+  relevantEvidence: ['correspondence', 'credit_agreement', 'bank_statements'],
+  regulations: {
+    primary: 'FCA Principle 6 (Treating Customers Fairly)',
+    secondary: ['DISP 1.4'],
+  },
+  letterTemplate: {
+    breach: 'failure to treat me fairly',
+    regulation: 'FCA Principles',
+    harm: 'as described above',
+    remedy: 'as outlined above',
+  },
+}
 
+function VulnerabilitySelector({
+  selectedVulnerabilities,
+  onToggle
+}: {
+  selectedVulnerabilities: string[]
+  onToggle: (id: string) => void  
+}) {
+  const vulnerabilities = Object.entries(SUCCESS_FACTORS.vulnerability)
+  
   return (
-    <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <TrendingUp className={`w-4 h-4 ${getColor()}`} />
-          <span className="text-sm text-white/60">Success estimate</span>
-        </div>
-        <span className={`text-2xl font-semibold ${getColor()}`}>{rate}%</span>
-      </div>
-      
-      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-4">
-        <div 
-          className={`h-full ${getBarColor()} transition-all duration-500`}
-          style={{ width: `${rate}%` }}
-        />
-      </div>
-      
-      {factors.length > 0 && (
-        <div className="space-y-2">
-          {factors.slice(0, 3).map((factor, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs">
-              {factor.positive ? (
-                <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />
-              ) : (
-                <AlertCircle className="w-3 h-3 text-amber-400 flex-shrink-0" />
-              )}
-              <span className="text-white/50 truncate">{factor.factor}</span>
-              <span className={`ml-auto font-medium ${factor.positive ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {factor.positive ? '+' : ''}{factor.impact}%
-              </span>
+    <div className="space-y-3">
+      <p className="text-sm text-white/50 mb-4">
+        The FCA requires firms to consider customers in vulnerable circumstances. 
+        If any of the following applied to you at the time, it may be relevant to your complaint.
+      </p>
+      {vulnerabilities.map(([id, vuln]) => {
+        const isSelected = selectedVulnerabilities.includes(id)
+        
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onToggle(id)}
+            className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all text-left ${
+              isSelected 
+                ? 'border-violet-500/50 bg-violet-500/10' 
+                : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.05] hover:border-white/20'
+            }`}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              isSelected ? 'border-violet-500 bg-violet-500' : 'border-white/30'
+            }`}>
+              {isSelected && <Check className="w-3 h-3 text-white" />}
             </div>
-          ))}
+            <p className={`flex-1 ${isSelected ? 'text-white' : 'text-white/80'}`}>
+              {vuln.label}
+            </p>
+          </button>
+        )
+      })}
+      
+      {selectedVulnerabilities.length > 0 && (
+        <div className="mt-6 p-4 bg-violet-500/10 border border-violet-500/30 rounded-xl">
+          <div className="flex items-start gap-3">
+            <Upload className="w-5 h-5 text-violet-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-white mb-1">Supporting evidence</p>
+              <p className="text-xs text-white/60">
+                If you have any documents that support these circumstances (medical letters, 
+                benefit statements, or other evidence), you can upload them to strengthen your complaint.
+              </p>
+            </div>
+          </div>
         </div>
       )}
+      
+      <p className="text-xs text-white/30 mt-3">
+        This information is confidential and only used to ensure firms consider their obligations under FCA guidance.
+      </p>
     </div>
   )
 }
@@ -79,7 +158,7 @@ function EvidenceSelector({
   return (
     <div className="space-y-3">
       <p className="text-sm text-white/50 mb-4">
-        Evidence strengthens your complaint. Select what you have:
+        Do you have any of the following documents? They can help support your complaint.
       </p>
       {relevantEvidence.map(evidenceId => {
         const evidence = (SUCCESS_FACTORS.evidence as any)[evidenceId]
@@ -108,57 +187,9 @@ function EvidenceSelector({
               </p>
               <p className="text-xs text-white/40">{evidence.description}</p>
             </div>
-            <span className="text-xs font-medium text-emerald-400">+{evidence.impact}%</span>
           </button>
         )
       })}
-    </div>
-  )
-}
-
-function VulnerabilitySelector({
-  selectedVulnerabilities,
-  onToggle
-}: {
-  selectedVulnerabilities: string[]
-  onToggle: (id: string) => void  
-}) {
-  const vulnerabilities = Object.entries(SUCCESS_FACTORS.vulnerability)
-  
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-white/50 mb-4">
-        FCA requires firms to consider vulnerability. Select any that applied:
-      </p>
-      {vulnerabilities.map(([id, vuln]) => {
-        const isSelected = selectedVulnerabilities.includes(id)
-        
-        return (
-          <button
-            key={id}
-            type="button"
-            onClick={() => onToggle(id)}
-            className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all text-left ${
-              isSelected 
-                ? 'border-violet-500/50 bg-violet-500/10' 
-                : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.05] hover:border-white/20'
-            }`}
-          >
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-              isSelected ? 'border-violet-500 bg-violet-500' : 'border-white/30'
-            }`}>
-              {isSelected && <Check className="w-3 h-3 text-white" />}
-            </div>
-            <p className={`flex-1 ${isSelected ? 'text-white' : 'text-white/80'}`}>
-              {vuln.label}
-            </p>
-            <span className="text-xs font-medium text-emerald-400">+{vuln.impact}%</span>
-          </button>
-        )
-      })}
-      <p className="text-xs text-white/30 mt-3">
-        This is confidential and only used to strengthen your complaint.
-      </p>
     </div>
   )
 }
@@ -167,11 +198,12 @@ function QuestionnaireContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const complaintType = searchParams.get('type') || 'car-finance'
+  const isFreeform = complaintType === 'freeform'
 
-  const config = useMemo(() => 
-    COMPLAINT_CONFIGS[complaintType as keyof typeof COMPLAINT_CONFIGS], 
-    [complaintType]
-  )
+  const config = useMemo(() => {
+    if (isFreeform) return FREEFORM_CONFIG
+    return COMPLAINT_CONFIGS[complaintType as keyof typeof COMPLAINT_CONFIGS]
+  }, [complaintType, isFreeform])
   
   const [currentStep, setCurrentStep] = useState(0)
   const [answers, setAnswers] = useState<Record<string, any>>({})
@@ -181,11 +213,6 @@ function QuestionnaireContent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showEvidenceStep, setShowEvidenceStep] = useState(false)
   const [showVulnerabilityStep, setShowVulnerabilityStep] = useState(false)
-
-  const successData = useMemo(() => {
-    if (!config) return { rate: 0, factors: [], recommendations: [] }
-    return calculateSuccessRate(complaintType, answers, selectedEvidence, selectedVulnerabilities)
-  }, [complaintType, answers, selectedEvidence, selectedVulnerabilities, config])
 
   if (!config) {
     return (
@@ -227,6 +254,7 @@ function QuestionnaireContent() {
     const answer = answers[currentQuestion.id]
     if (!(currentQuestion as any).required) return true
     if (currentQuestion.type === 'multiselect') return Array.isArray(answer) && answer.length > 0
+    if (currentQuestion.type === 'textarea') return answer && answer.toString().trim().length > 10
     return answer && answer.toString().trim().length > 0
   }
 
@@ -252,7 +280,6 @@ function QuestionnaireContent() {
       evidence: selectedEvidence,
       vulnerabilities: selectedVulnerabilities,
       fileNames: files.map(f => f.name),
-      successRate: successData.rate,
       timestamp: new Date().toISOString(),
     }
     sessionStorage.setItem('complaintData', JSON.stringify(complaintData))
@@ -265,7 +292,8 @@ function QuestionnaireContent() {
       case 'credit': return (q: string) => searchProviders(q, 'credit')
       case 'car': return (q: string) => searchProviders(q, 'car')
       case 'loan': return (q: string) => searchProviders(q, 'loan')
-      default: return () => []
+      case 'all': return (q: string) => searchProviders(q, 'all')
+      default: return (q: string) => searchProviders(q, 'all')
     }
   }
 
@@ -283,6 +311,18 @@ function QuestionnaireContent() {
             placeholder={q.placeholder}
             autoFocus
             className="w-full px-5 py-4 bg-white/[0.03] border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-white/30 text-lg"
+          />
+        )
+
+      case 'textarea':
+        return (
+          <textarea
+            value={value}
+            onChange={(e) => handleAnswer(e.target.value)}
+            placeholder={q.placeholder}
+            autoFocus
+            rows={6}
+            className="w-full px-5 py-4 bg-white/[0.03] border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-white/30 text-lg resize-none"
           />
         )
 
@@ -320,18 +360,6 @@ function QuestionnaireContent() {
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {option.badge && (
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        option.highlight ? 'bg-amber-500/20 text-amber-400' : 'bg-white/10 text-white/60'
-                      }`}>
-                        {option.badge}
-                      </span>
-                    )}
-                    {option.successModifier > 0 && (
-                      <span className="text-xs font-medium text-emerald-400">+{option.successModifier}%</span>
-                    )}
-                  </div>
                 </div>
               </button>
             ))}
@@ -360,9 +388,6 @@ function QuestionnaireContent() {
                       {isSelected && <Check className="w-3 h-3 text-black" />}
                     </div>
                     <span className="text-white">{option.label}</span>
-                    {option.successModifier > 0 && (
-                      <span className="ml-auto text-xs font-medium text-emerald-400">+{option.successModifier}%</span>
-                    )}
                   </div>
                 </button>
               )
@@ -439,102 +464,81 @@ function QuestionnaireContent() {
       </header>
 
       <div className="pt-24 pb-12 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main */}
-            <div className="lg:col-span-2">
-              <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-8">
-                <div className="text-sm text-white/40 mb-6">{config.title}</div>
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-8">
+            <div className="text-sm text-white/40 mb-6">{config.title}</div>
 
-                {showVulnerabilityStep ? (
-                  <>
-                    <h1 className="text-2xl font-semibold mb-2">Any circumstances we should know?</h1>
-                    <p className="text-white/50 mb-8">Optional, but can strengthen your case</p>
-                    <VulnerabilitySelector selectedVulnerabilities={selectedVulnerabilities} onToggle={toggleVulnerability} />
-                  </>
-                ) : showEvidenceStep ? (
-                  <>
-                    <h1 className="text-2xl font-semibold mb-2">What evidence do you have?</h1>
-                    <p className="text-white/50 mb-8">More evidence = stronger complaint</p>
-                    <EvidenceSelector relevantEvidence={config.relevantEvidence || []} selectedEvidence={selectedEvidence} onToggle={toggleEvidence} />
-                    <div className="mt-8 pt-8 border-t border-white/10">
-                      <p className="text-sm text-white/60 mb-4">Upload documents (optional)</p>
-                      <FileUpload files={files} onChange={setFiles} helpText="PDFs, images, docs" dark />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h1 className="text-2xl font-semibold mb-2">{currentQuestion.question}</h1>
-                    {(currentQuestion as any).helpText && (
-                      <p className="text-white/50 mb-8 flex items-start gap-2">
-                        <Info className="w-4 h-4 text-white/40 flex-shrink-0 mt-1" />
-                        {(currentQuestion as any).helpText}
-                      </p>
-                    )}
-                    <div className="mb-8">{renderQuestion()}</div>
-                  </>
-                )}
-
-                {(showEvidenceStep || showVulnerabilityStep || !['select', 'date_range', 'currency_range'].includes(currentQuestion.type)) && (
-                  <div className="flex items-center justify-between gap-4 mt-8 pt-8 border-t border-white/10">
-                    <button
-                      type="button"
-                      onClick={handleNext}
-                      className="text-white/40 hover:text-white text-sm transition-colors"
-                    >
-                      Skip
-                    </button>
-                    <button
-                      onClick={handleNext}
-                      disabled={!canProceed() || isSubmitting}
-                      className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${
-                        canProceed() && !isSubmitting
-                          ? 'bg-white text-black hover:bg-white/90'
-                          : 'bg-white/10 text-white/30 cursor-not-allowed'
-                      }`}
-                    >
-                      {isSubmitting ? (
-                        <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
-                      ) : showVulnerabilityStep ? (
-                        <><span>Review & Generate</span> <ArrowRight className="w-5 h-5" /></>
-                      ) : (
-                        <><span>Continue</span> <ArrowRight className="w-5 h-5" /></>
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24 space-y-4">
-                <SuccessIndicator rate={successData.rate} factors={successData.factors} />
+            {showVulnerabilityStep ? (
+              <>
+                <h1 className="text-2xl font-semibold mb-2">Were there any special circumstances?</h1>
+                <p className="text-white/50 mb-8">Optional - but firms must consider vulnerability</p>
+                <VulnerabilitySelector selectedVulnerabilities={selectedVulnerabilities} onToggle={toggleVulnerability} />
                 
-                {successData.recommendations.length > 0 && (
-                  <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5">
-                    <h3 className="text-sm font-medium text-white/60 mb-3">Boost your chances</h3>
-                    <ul className="space-y-2">
-                      {successData.recommendations.slice(0, 2).map((rec, i) => (
-                        <li key={i} className="text-xs text-white/40 flex items-start gap-2">
-                          <TrendingUp className="w-3 h-3 text-emerald-400 flex-shrink-0 mt-0.5" />
-                          {rec}
-                        </li>
-                      ))}
-                    </ul>
+                {selectedVulnerabilities.length > 0 && (
+                  <div className="mt-8 pt-8 border-t border-white/10">
+                    <p className="text-sm text-white/60 mb-4">Upload supporting evidence (optional)</p>
+                    <FileUpload files={files} onChange={setFiles} helpText="Medical letters, benefit statements, or other documents" dark />
                   </div>
                 )}
-                
-                <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5">
-                  <div className="flex items-center gap-2 text-sm text-white/60">
-                    <Shield className="w-4 h-4 text-emerald-400" />
-                    <span>Your data is secure</span>
-                  </div>
-                  <p className="text-xs text-white/30 mt-2">
-                    We never share your info. Used only to generate your letter.
-                  </p>
+              </>
+            ) : showEvidenceStep ? (
+              <>
+                <h1 className="text-2xl font-semibold mb-2">Do you have any supporting documents?</h1>
+                <p className="text-white/50 mb-8">Not required, but can help support your complaint</p>
+                <EvidenceSelector relevantEvidence={config.relevantEvidence || []} selectedEvidence={selectedEvidence} onToggle={toggleEvidence} />
+                <div className="mt-8 pt-8 border-t border-white/10">
+                  <p className="text-sm text-white/60 mb-4">Upload documents (optional)</p>
+                  <FileUpload files={files} onChange={setFiles} helpText="PDFs, images, or documents" dark />
                 </div>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-semibold mb-2">{currentQuestion.question}</h1>
+                {(currentQuestion as any).helpText && (
+                  <p className="text-white/50 mb-8 flex items-start gap-2">
+                    <Info className="w-4 h-4 text-white/40 flex-shrink-0 mt-1" />
+                    {(currentQuestion as any).helpText}
+                  </p>
+                )}
+                <div className="mb-8">{renderQuestion()}</div>
+              </>
+            )}
+
+            {(showEvidenceStep || showVulnerabilityStep || !['select', 'date_range', 'currency_range'].includes(currentQuestion.type)) && (
+              <div className="flex items-center justify-between gap-4 mt-8 pt-8 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="text-white/40 hover:text-white text-sm transition-colors"
+                >
+                  Skip
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={!canProceed() || isSubmitting}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${
+                    canProceed() && !isSubmitting
+                      ? 'bg-white text-black hover:bg-white/90'
+                      : 'bg-white/10 text-white/30 cursor-not-allowed'
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
+                  ) : showVulnerabilityStep ? (
+                    <><span>Review complaint</span> <ArrowRight className="w-5 h-5" /></>
+                  ) : (
+                    <><span>Continue</span> <ArrowRight className="w-5 h-5" /></>
+                  )}
+                </button>
               </div>
+            )}
+          </div>
+
+          {/* Info card */}
+          <div className="mt-6 bg-white/[0.02] border border-white/10 rounded-xl p-5">
+            <div className="flex items-center gap-2 text-sm text-white/60">
+              <Shield className="w-4 h-4 text-emerald-400" />
+              <span>Your information is secure and confidential</span>
             </div>
           </div>
         </div>

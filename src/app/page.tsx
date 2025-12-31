@@ -2,108 +2,90 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronDown, ArrowRight, Check } from 'lucide-react'
+import { ChevronDown, ArrowRight } from 'lucide-react'
 
-// Top 5 financial complaints + Other
-const topComplaints = [
+// Financial complaint types
+const complaintTypes = [
   {
     id: 'car-finance',
-    title: 'Mis-sold car finance?',
-    subtitle: 'Hidden commission on PCP/HP',
-    amount: 'Avg. £1,100 back',
+    title: 'Car finance',
+    subtitle: 'PCP, HP, or motor finance',
     icon: '🚗',
     gradient: 'from-violet-500 to-purple-600',
-    tag: 'Popular',
-    examples: ['Secret commission', 'No rate options', 'DCA period'],
-  },
-  {
-    id: 'bank-fraud',
-    title: 'Scammed & bank won\'t refund?',
-    subtitle: 'New rules mean they should pay',
-    amount: 'Avg. £3,000 back',
-    icon: '🚨',
-    gradient: 'from-rose-500 to-pink-600',
-    tag: 'New rules',
-    examples: ['APP fraud', 'Impersonation', 'Investment scam'],
+    examples: ['Commission disclosure', 'Interest rates', 'Agreement terms'],
   },
   {
     id: 'credit-card',
-    title: 'Given credit you couldn\'t afford?',
-    subtitle: 'Limits increased without checks',
-    amount: 'Up to £5,000',
+    title: 'Credit cards',
+    subtitle: 'Limits, charges, affordability',
     icon: '💳',
     gradient: 'from-blue-500 to-cyan-500',
-    tag: null,
-    examples: ['Auto limit increase', 'No affordability check', 'Debt spiral'],
+    highlight: true,
+    examples: ['Credit limits', 'Affordability checks', 'Fees and charges'],
+  },
+  {
+    id: 'bank-fraud',
+    title: 'Fraud & scams',
+    subtitle: 'Unauthorised transactions',
+    icon: '🚨',
+    gradient: 'from-rose-500 to-pink-600',
+    examples: ['APP fraud', 'Unauthorised payments', 'Account security'],
   },
   {
     id: 'unaffordable-loan',
-    title: 'Loan you should never have had?',
-    subtitle: 'Irresponsible lending',
-    amount: 'Up to £5,000',
+    title: 'Loans & lending',
+    subtitle: 'Personal loans, overdrafts',
     icon: '💷',
     gradient: 'from-amber-500 to-orange-500',
-    tag: null,
-    examples: ['Multiple loans', 'Already in debt', 'Payday lenders'],
+    examples: ['Affordability', 'Loan terms', 'Debt collection'],
   },
   {
     id: 'section-75',
-    title: 'Paid by card, got nothing?',
-    subtitle: 'Section 75 protection',
-    amount: '£100 - £30,000',
+    title: 'Section 75',
+    subtitle: 'Credit card purchase protection',
     icon: '🛡️',
     gradient: 'from-emerald-500 to-teal-500',
-    tag: null,
-    examples: ['Company bust', 'Never delivered', 'Goods faulty'],
+    examples: ['Goods not received', 'Misrepresentation', 'Breach of contract'],
   },
   {
     id: 'other',
-    title: 'Other financial complaint?',
-    subtitle: 'Insurance, investments, mortgages...',
-    amount: 'We can help',
+    title: 'Other financial',
+    subtitle: 'Insurance, investments, more',
     icon: '📝',
     gradient: 'from-gray-500 to-gray-600',
-    tag: null,
-    examples: ['Insurance claim', 'Pension mis-sold', 'Unfair charges'],
+    examples: ['Insurance', 'Pensions', 'Mortgages', 'Investments'],
     isOther: true,
   },
 ]
 
-const commonProblems = [
-  'My car dealer never told me about commission',
-  'I was given a credit card I couldn\'t afford',
-  'I got scammed and my bank won\'t refund me',
-  'They kept lending to me when I was already in debt',
-  'The company went bust and I lost my money',
-  'My insurance claim was rejected unfairly',
-  'I was mis-sold a pension',
-  'They put a default on my credit file wrongly',
-]
-
 const faqs = [
   {
-    q: 'What kind of complaints can you help with?',
-    a: 'Any complaint against an FCA-regulated financial firm: banks, lenders, credit card companies, car finance providers, insurers, investment firms, and more. If it\'s financial services, we can help.',
+    q: 'What is iComplain?',
+    a: 'iComplain is a document preparation service. We help you create structured complaint letters to send to financial services firms. You send the complaint yourself and manage your own case.',
+  },
+  {
+    q: 'What types of complaints can I create?',
+    a: 'Any complaint to an FCA-regulated financial services firm: banks, lenders, credit card providers, insurers, investment firms, and similar organisations.',
   },
   {
     q: 'How much does it cost?',
-    a: '£29 flat fee for your personalised complaint letter. Unlike claims companies who take 25-40% of your payout, you keep 100% of any compensation you receive.',
+    a: '£29 for a personalised complaint letter based on your answers.',
   },
   {
-    q: 'What makes your letters better than a template?',
-    a: 'Our AI analyses your specific situation and writes a letter citing the exact regulations that apply to your case. We\'ve studied 170,000+ Financial Ombudsman decisions to know what works.',
+    q: 'What documents will I receive?',
+    a: 'A formal complaint letter addressed to the firm, structured with the relevant facts of your case. You can also receive guidance on next steps including the Financial Ombudsman Service.',
   },
   {
-    q: 'Do I need any documents?',
-    a: 'Not essential. We can create your letter based on what you remember. But if you have your agreement, statements, or correspondence, they help strengthen your case.',
+    q: 'Do I need to provide documents?',
+    a: 'Not required, but any supporting documents you have (agreements, statements, correspondence) can help us create a more detailed letter.',
   },
   {
     q: 'What happens after I send the complaint?',
-    a: 'The firm has 8 weeks to send a Final Response. If they reject you or don\'t respond, you can escalate to the Financial Ombudsman Service (FOS) for free - we include guidance on how.',
+    a: 'The firm has 8 weeks to provide a Final Response. If you\'re unhappy with the outcome, you may be able to refer your complaint to the Financial Ombudsman Service.',
   },
   {
-    q: 'Is this a claims company?',
-    a: 'No. We\'re a document preparation service. We help you write your complaint - you send it yourself and keep 100% of any money you get back. We\'re not FCA regulated because we don\'t manage your claim.',
+    q: 'Are you a claims management company?',
+    a: 'No. We are a document preparation service. We do not submit complaints on your behalf, provide legal or financial advice, or take a percentage of any outcome.',
   },
 ]
 
@@ -120,7 +102,7 @@ export default function HomePage() {
           </Link>
           <div className="flex items-center gap-8">
             <Link href="#complaints" className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block">
-              Complaints
+              Complaint types
             </Link>
             <Link href="#faq" className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block">
               FAQ
@@ -129,7 +111,7 @@ export default function HomePage() {
               href="#complaints"
               className="text-sm font-medium bg-white text-black px-4 py-2 rounded-full hover:bg-white/90 transition-colors"
             >
-              Start complaint
+              Create complaint
             </Link>
           </div>
         </div>
@@ -138,64 +120,62 @@ export default function HomePage() {
       {/* Hero */}
       <section className="pt-32 pb-20 px-6">
         <div className="max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full text-sm mb-8">
-            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-            <span className="text-white/70">£8bn car finance payout underway</span>
-          </div>
-          
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-semibold tracking-tight leading-[1.1] mb-6">
-            Been treated unfairly
+            Financial services
             <br />
-            <span className="text-white/40">by a bank or lender?</span>
+            <span className="text-white/40">complaint letters</span>
           </h1>
           
           <p className="text-xl text-white/60 max-w-xl mb-10 leading-relaxed">
-            Get the money you're owed. Professional complaint letters in 5 minutes. 
-            Keep 100% of your compensation—no claims company taking a cut.
+            Create a structured complaint letter for banks, lenders, and other 
+            FCA-regulated firms. Answer questions about your situation and 
+            receive a personalised document.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 mb-12">
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <Link
               href="#complaints"
               className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-4 rounded-full text-lg font-medium hover:bg-white/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              Start my complaint
+              Create a complaint
               <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link
+              href="/questionnaire?type=freeform"
+              className="inline-flex items-center justify-center gap-2 bg-white/10 text-white border border-white/20 px-8 py-4 rounded-full text-lg font-medium hover:bg-white/20 transition-all"
+            >
+              Or tell us what happened
             </Link>
           </div>
 
-          {/* Common problems scroll */}
-          <div className="overflow-hidden">
-            <p className="text-sm text-white/40 mb-3">Sound familiar?</p>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
-              {commonProblems.map((problem, i) => (
-                <Link
-                  key={i}
-                  href="#complaints"
-                  className="flex-shrink-0 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-4 py-2 text-sm text-white/70 hover:text-white transition-colors whitespace-nowrap"
-                >
-                  "{problem}"
-                </Link>
-              ))}
-            </div>
-          </div>
+          <p className="text-sm text-white/40">
+            £29 per complaint letter • Document preparation service
+          </p>
         </div>
       </section>
 
-      {/* Stats */}
+      {/* What we do / What we don't do */}
       <section className="py-12 px-6 border-y border-white/5 bg-white/[0.02]">
-        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="text-3xl font-semibold mb-1">170K+</div>
-            <div className="text-sm text-white/40">FOS cases analysed</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-semibold mb-1">75%</div>
-            <div className="text-sm text-white/40">FOS overturn rate</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-semibold mb-1">100%</div>
-            <div className="text-sm text-white/40">Yours to keep</div>
+        <div className="max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12">
+            <div>
+              <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-4">What we do</h3>
+              <ul className="space-y-3 text-white/70">
+                <li>• Create personalised complaint letters</li>
+                <li>• Structure your case with relevant details</li>
+                <li>• Provide document templates</li>
+                <li>• Include guidance on complaint processes</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-4">What we don't do</h3>
+              <ul className="space-y-3 text-white/70">
+                <li>• Submit complaints on your behalf</li>
+                <li>• Provide legal or financial advice</li>
+                <li>• Take a percentage of outcomes</li>
+                <li>• Manage your case or correspondence</li>
+              </ul>
+            </div>
           </div>
         </div>
       </section>
@@ -203,25 +183,22 @@ export default function HomePage() {
       {/* Complaint types */}
       <section id="complaints" className="py-20 px-6 scroll-mt-20">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-semibold tracking-tight mb-4">What's your complaint about?</h2>
-          <p className="text-white/50 mb-10">Choose the closest match—or select "Other" for any financial complaint</p>
+          <h2 className="text-3xl font-semibold tracking-tight mb-4">Select complaint type</h2>
+          <p className="text-white/50 mb-10">Choose the category that best matches your situation</p>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {topComplaints.map((type) => (
+            {complaintTypes.map((type) => (
               <Link
                 key={type.id}
                 href={`/questionnaire?type=${type.id}`}
                 className={`group relative border rounded-2xl p-6 transition-all hover:scale-[1.02] active:scale-[0.98] ${
                   type.isOther 
                     ? 'bg-white/[0.02] border-dashed border-white/20 hover:border-white/40' 
+                    : type.highlight
+                    ? 'bg-white/[0.05] border-white/20 hover:border-white/30'
                     : 'bg-white/[0.03] hover:bg-white/[0.06] border-white/10 hover:border-white/20'
                 }`}
               >
-                {type.tag && (
-                  <span className="absolute top-4 right-4 text-xs bg-white/10 px-2 py-1 rounded-full">
-                    {type.tag}
-                  </span>
-                )}
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${type.gradient} mb-4 flex items-center justify-center text-2xl`}>
                   {type.icon}
                 </div>
@@ -236,17 +213,33 @@ export default function HomePage() {
                   ))}
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-emerald-400">{type.amount}</span>
+                <div className="flex items-center justify-end">
                   <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 group-hover:translate-x-1 transition-all" />
                 </div>
               </Link>
             ))}
           </div>
+
+          {/* Free-form option */}
+          <div className="mt-8 p-6 bg-white/[0.02] border border-white/10 rounded-2xl">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 className="font-medium mb-1">Not sure which category?</h3>
+                <p className="text-sm text-white/50">Tell us what happened in your own words and we'll help structure your complaint.</p>
+              </div>
+              <Link
+                href="/questionnaire?type=freeform"
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 px-5 py-2.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap"
+              >
+                Write freely
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* How it works */}
+      {/* Process */}
       <section className="py-20 px-6 bg-white/[0.02]">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-semibold tracking-tight mb-12">How it works</h2>
@@ -255,18 +248,18 @@ export default function HomePage() {
             {[
               {
                 step: '01',
-                title: 'Tell us what happened',
-                desc: 'Answer simple questions about your situation. No legal jargon—just tell us what went wrong.',
+                title: 'Provide details',
+                desc: 'Answer questions about your situation or describe what happened in your own words.',
               },
               {
                 step: '02',
-                title: 'We write your complaint',
-                desc: 'Our AI creates a professional letter citing the exact regulations and arguments that work.',
+                title: 'Review your letter',
+                desc: 'We create a structured complaint letter based on the information you provide.',
               },
               {
                 step: '03',
-                title: 'Send it & get paid',
-                desc: 'Email your letter to the firm. They have 8 weeks to respond. You keep 100% of any payout.',
+                title: 'Send it yourself',
+                desc: 'Download your letter and send it to the firm. You manage your own complaint.',
               },
             ].map((item) => (
               <div key={item.step} className="relative">
@@ -279,88 +272,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Why not claims company */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-semibold tracking-tight mb-12 text-center">
-            Why not use a claims company?
-          </h2>
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8">
-              <div className="text-2xl mb-6">🦈</div>
-              <h3 className="text-xl font-medium mb-6">Claims companies</h3>
-              <ul className="space-y-4">
-                {[
-                  'Take 25-40% of your money',
-                  'You could lose £1,000+',
-                  'Same template for everyone',
-                  'Endless phone calls',
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3 text-white/50">
-                    <span className="text-rose-400 mt-0.5">✕</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/20 rounded-2xl p-8">
-              <div className="text-2xl mb-6">✨</div>
-              <h3 className="text-xl font-medium mb-6">iComplain</h3>
-              <ul className="space-y-4">
-                {[
-                  '£29 flat fee - that\'s it',
-                  'Keep 100% of your money',
-                  'Letter written for YOUR case',
-                  'Ready in 5 minutes',
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-8 pt-6 border-t border-white/10">
-                <p className="text-sm text-white/50">
-                  <span className="text-white">Example:</span> On a £2,000 payout, claims companies take £500-800. 
-                  With us, pay £29 and keep the full £2,000.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonial */}
-      <section className="py-20 px-6 bg-white/[0.02]">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="flex justify-center gap-1 mb-6">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <span key={i} className="text-amber-400">★</span>
-            ))}
-          </div>
-          <blockquote className="text-2xl sm:text-3xl font-medium leading-relaxed mb-8">
-            "Black Horse never told me about commission on my car finance. 
-            iComplain wrote my letter and I got £2,400 back.
-            <span className="text-white/40"> Best £29 I ever spent.</span>"
-          </blockquote>
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-sm font-medium">
-              JT
-            </div>
-            <div className="text-left">
-              <div className="font-medium">James T.</div>
-              <div className="text-sm text-white/40">Car finance complaint</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* FAQ */}
       <section id="faq" className="py-20 px-6 scroll-mt-20">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-semibold tracking-tight mb-12 text-center">Questions</h2>
+          <h2 className="text-3xl font-semibold tracking-tight mb-12 text-center">Frequently asked questions</h2>
           
           <div className="space-y-3">
             {faqs.map((faq, i) => (
@@ -389,16 +304,16 @@ export default function HomePage() {
       <section className="py-24 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight mb-6">
-            Ready to get your money back?
+            Create your complaint letter
           </h2>
           <p className="text-white/50 mb-10 text-lg">
-            5 minutes. £29. Keep 100% of what you're owed.
+            £29 per document. You send it, you manage it, you keep any outcome.
           </p>
           <Link
             href="#complaints"
             className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-4 rounded-full text-lg font-medium hover:bg-white/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            Start my complaint
+            Get started
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
@@ -417,7 +332,8 @@ export default function HomePage() {
             </div>
           </div>
           <p className="mt-8 text-xs text-white/30 text-center max-w-xl mx-auto">
-            iComplain is a document preparation service. We help you write complaints against FCA-regulated firms—we don't provide legal advice or guarantee outcomes. 
+            iComplain is a document preparation service. We create complaint letters based on information you provide. 
+            We do not provide legal or financial advice, submit complaints on your behalf, or guarantee any outcome. 
             Not a law firm or claims management company.
           </p>
         </div>
