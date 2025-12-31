@@ -30,6 +30,50 @@ Key legal points to include:
 
 Generate a complete, ready-to-send complaint letter. Include today's date, proper formatting, and a 14-day response deadline.`,
 
+  'credit-card-affordability': `You are an expert at writing complaints about irresponsible credit card lending and unaffordable credit limits.
+
+Your task is to generate a formal complaint letter that:
+1. Is addressed to the credit card provider
+2. Argues that adequate affordability checks were not conducted before issuing the card or increasing limits
+3. References CONC 5 (FCA's Consumer Credit sourcebook on responsible lending)
+4. Details any unsolicited credit limit increases that worsened the situation
+5. Explains how a proper assessment would have shown the credit was unaffordable
+6. Requests appropriate remedies (refund of interest and charges, removal of adverse credit data)
+7. Mentions persistent debt rules if applicable (paying mostly interest for 18+ months)
+
+Key legal points to include:
+- Lenders must conduct a reasonable assessment of creditworthiness (CONC 5.2.1R)
+- The assessment must consider the customer's ability to repay sustainably
+- Credit limit increases require fresh affordability assessments
+- If a customer was in persistent debt, lender should have intervened
+- Unsolicited limit increases without proper checks are problematic
+- Remedies can include refund of all interest and charges paid
+- The FCA's persistent debt rules require lenders to help struggling customers
+
+Generate a complete, ready-to-send complaint letter.`,
+
+  'bank-fraud': `You are an expert at writing complaints about bank fraud refunds and unauthorised transactions.
+
+Your task is to generate a formal complaint letter that:
+1. Is addressed to the bank
+2. Details the fraud or scam that occurred
+3. Explains what steps the customer took (reporting, etc.)
+4. References the Contingent Reimbursement Model Code (for APP fraud) if applicable
+5. References PSR requirements for mandatory reimbursement (from Oct 2024) if applicable
+6. Argues why the bank should refund under their duty of care
+7. Sets a clear deadline for response
+
+Key legal points to include:
+- Banks have a duty to protect customers from fraud
+- Payment Services Regulations require refunds for unauthorised transactions
+- For Authorised Push Payment (APP) scams, the CRM Code and new PSR rules apply
+- Banks must reimburse APP fraud victims up to £85,000 (from Oct 2024)
+- Gross negligence must be proven by the bank to deny a claim
+- The bank should have had systems to detect unusual transactions
+- Delays in reporting do not automatically disqualify claims
+
+Generate a complete, ready-to-send complaint letter.`,
+
   section75: `You are an expert at writing Section 75 Consumer Credit Act claim letters.
 
 Your task is to generate a formal claim letter that:
@@ -71,27 +115,6 @@ Key legal points to include:
 - Remedies can include refund of all interest and charges paid
 
 Generate a complete, ready-to-send complaint letter.`,
-
-  'holiday-park': `You are an expert at writing complaints about holiday park and static caravan mis-selling.
-
-Your task is to generate a formal complaint letter that:
-1. Is addressed to the holiday park operator
-2. Details the specific promises made during the sales process
-3. Contrasts those promises with the actual experience
-4. References the Consumer Rights Act 2015 (unfair contract terms)
-5. References the Consumer Protection from Unfair Trading Regulations 2008
-6. Details financial losses suffered
-7. Requests specific remedies (rescission of contract, compensation)
-
-Key legal points to include:
-- Verbal promises made during sales can form part of the contract
-- Misleading sales practices breach the Consumer Protection Regulations
-- Unfair contract terms (e.g., forced use of park services) may be unenforceable
-- Significant hidden fees not disclosed at point of sale may be challengeable
-- High-pressure sales tactics in lengthy presentations may constitute unfair practices
-- Depreciation misrepresented as "holding value" is actionable misrepresentation
-
-Generate a complete, ready-to-send complaint letter.`,
 }
 
 // Evidence checklist for each complaint type
@@ -102,6 +125,22 @@ const EVIDENCE_CHECKLISTS: Record<string, string[]> = {
     'Proof of payments made (bank statements)',
     'Any correspondence about the finance',
     'The vehicle order form if you have it',
+  ],
+  'credit-card-affordability': [
+    'Credit card statements showing spending patterns',
+    'Bank statements from when you applied',
+    'Evidence of credit limit increases',
+    'Any correspondence about missed payments',
+    'Proof of income at time of application',
+    'Evidence of other debts at the time',
+  ],
+  'bank-fraud': [
+    'Bank statements showing the fraudulent transaction(s)',
+    'Screenshots of any scam messages or emails',
+    'Crime reference number from police report',
+    'Timeline of when you reported the fraud',
+    'Any correspondence with the bank about the fraud',
+    'Evidence of how the fraud occurred',
   ],
   section75: [
     'Copy of your credit card statement showing the purchase',
@@ -116,13 +155,6 @@ const EVIDENCE_CHECKLISTS: Record<string, string[]> = {
     'Evidence of other debts at the time',
     'Any correspondence about missed payments',
     'Credit report if available',
-  ],
-  'holiday-park': [
-    'Your contract or membership agreement',
-    'Any sales brochures or promotional materials',
-    'Notes of what was promised verbally (if you made any)',
-    'Evidence of fees charged vs what was quoted',
-    'Any correspondence with the company',
   ],
 }
 
@@ -149,6 +181,38 @@ Finance Amount: £${answers.finance_amount || 'Not provided'}
 Interest Rate (APR): ${answers.interest_rate || 'Not provided'}
 Was Commission Disclosed: ${answers.commission_disclosed || 'Not provided'}
 Agreement Status: ${answers.still_paying || 'Not provided'}
+Additional Information: ${answers.additional_info || 'None'}`)
+      break
+    
+    case 'credit-card-affordability':
+      sections.push(`
+CREDIT CARD AFFORDABILITY DETAILS:
+Credit Card Provider: ${answers.card_provider || 'Not provided'}
+Date Card Was Opened: ${answers.start_date || 'Not provided'}
+Initial Credit Limit: £${answers.initial_limit || 'Not provided'}
+Current/Final Credit Limit: £${answers.final_limit || 'Not provided'}
+Were Limit Increases Requested: ${answers.limit_increases_requested || 'Not provided'}
+Monthly Income at the Time: £${answers.income_at_time || 'Not provided'}
+Other Debts at the Time: ${answers.existing_debt || 'Not provided'}
+What Checks Were Done: ${answers.affordability_checks || 'Not provided'}
+Financial Difficulty Caused: ${answers.financial_difficulty || 'Not provided'}
+How It Affected Me: ${answers.difficulty_description || 'Not provided'}
+Current Status of the Account: ${answers.current_status || 'Not provided'}`)
+      break
+    
+    case 'bank-fraud':
+      sections.push(`
+BANK FRAUD DETAILS:
+Bank Name: ${answers.bank_name || 'Not provided'}
+Account Type: ${answers.account_type || 'Not provided'}
+Date of Fraud: ${answers.fraud_date || 'Not provided'}
+Amount Lost: £${answers.amount_lost || 'Not provided'}
+Type of Fraud: ${answers.fraud_type || 'Not provided'}
+How the Fraud Occurred: ${answers.fraud_description || 'Not provided'}
+When Reported to Bank: ${answers.report_date || 'Not provided'}
+Bank's Response: ${answers.bank_response || 'Not provided'}
+Police Report Reference: ${answers.police_reference || 'Not provided'}
+Was Money Recovered: ${answers.money_recovered || 'Not provided'}
 Additional Information: ${answers.additional_info || 'None'}`)
       break
       
@@ -180,20 +244,6 @@ What Checks Were Done: ${answers.affordability_checks || 'Not provided'}
 Financial Difficulty Caused: ${answers.financial_difficulty || 'Not provided'}
 How It Affected Me: ${answers.difficulty_description || 'Not provided'}
 Current Status of the Account: ${answers.current_status || 'Not provided'}`)
-      break
-      
-    case 'holiday-park':
-      sections.push(`
-HOLIDAY PARK COMPLAINT DETAILS:
-Company: ${answers.company || 'Not provided'}
-Type of Product: ${answers.product_type || 'Not provided'}
-Purchase Date: ${answers.purchase_date || 'Not provided'}
-Purchase Price: £${answers.purchase_price || 'Not provided'}
-Payment Method: ${answers.payment_method || 'Not provided'}
-Sales Presentation: ${answers.sales_presentation || 'Not provided'}
-Pressure Felt: ${answers.pressure_tactics || 'Not provided'}
-What Was Promised: ${answers.promises_made || 'Not provided'}
-Problems Experienced: ${answers.problems_experienced || 'Not provided'}`)
       break
   }
   

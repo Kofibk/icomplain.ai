@@ -7,35 +7,48 @@ import { ArrowRight, Check, Shield, Clock, ChevronDown, Star, Upload, Brain, Fil
 const complaintTypes = [
   {
     id: 'pcp',
-    title: 'Car Finance (PCP)',
+    title: 'Car Finance (PCP/HP)',
     description: 'Hidden commission claims',
-    amount: '£700 - £4,000',
+    amount: '£1,000 - £3,000',
     icon: '🚗',
-    time: '8 mins',
+    time: '5 mins',
+    hot: true,
   },
   {
-    id: 'section75',
-    title: 'Credit Card',
-    description: 'Section 75 claims',
-    amount: '£100 - £30,000',
+    id: 'credit-card-affordability',
+    title: 'Credit Card Affordability',
+    description: 'Unaffordable lending & limit increases',
+    amount: '£500 - £5,000',
     icon: '💳',
+    time: '5 mins',
+    hot: true,
+  },
+  {
+    id: 'bank-fraud',
+    title: 'Bank Fraud Refund',
+    description: 'Scam or unauthorised transaction',
+    amount: '£500 - £10,000+',
+    icon: '🏦',
     time: '6 mins',
+    hot: false,
   },
   {
     id: 'unaffordable',
     title: 'Unaffordable Lending',
-    description: 'Loans & credit you couldn\'t afford',
-    amount: '£500 - £10,000',
+    description: 'Loans, overdrafts & credit you couldn\'t afford',
+    amount: '£500 - £5,000',
     icon: '📊',
-    time: '7 mins',
+    time: '5 mins',
+    hot: false,
   },
   {
-    id: 'holiday-park',
-    title: 'Holiday Park',
-    description: 'Timeshare & holiday park mis-selling',
-    amount: '£2,000 - £50,000',
-    icon: '🏕️',
-    time: '10 mins',
+    id: 'section75',
+    title: 'Section 75',
+    description: 'Credit card purchase protection',
+    amount: '£100 - £30,000',
+    icon: '🛡️',
+    time: '5 mins',
+    hot: false,
   },
 ]
 
@@ -151,7 +164,14 @@ export default function HomePage() {
                 className="group bg-white rounded-2xl p-6 border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <span className="text-3xl">{type.icon}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl">{type.icon}</span>
+                    {type.hot && (
+                      <span className="text-xs font-medium text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
+                        🔥 Hot
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
                     {type.time}
                   </span>
@@ -360,9 +380,11 @@ export default function HomePage() {
             <div>
               <p className="font-medium text-gray-900 mb-3">Complaints</p>
               <ul className="space-y-2 text-sm text-gray-500">
-                <li><Link href="/smart-upload?type=pcp" className="hover:text-gray-900">Car Finance</Link></li>
-                <li><Link href="/smart-upload?type=section75" className="hover:text-gray-900">Credit Card</Link></li>
+                <li><Link href="/smart-upload?type=pcp" className="hover:text-gray-900">Car Finance (PCP)</Link></li>
+                <li><Link href="/smart-upload?type=credit-card-affordability" className="hover:text-gray-900">Credit Card Affordability</Link></li>
+                <li><Link href="/smart-upload?type=bank-fraud" className="hover:text-gray-900">Bank Fraud Refund</Link></li>
                 <li><Link href="/smart-upload?type=unaffordable" className="hover:text-gray-900">Unaffordable Lending</Link></li>
+                <li><Link href="/smart-upload?type=section75" className="hover:text-gray-900">Section 75</Link></li>
               </ul>
             </div>
             <div>
