@@ -437,7 +437,7 @@ export function searchProviders(query: string, type: 'bank' | 'credit' | 'car' |
       break
   }
   
-  const combined = [...new Set(lists.flat())]
+  const combined = Array.from(new Set(lists.flat()))
   return combined.filter(name => name.toLowerCase().includes(q)).slice(0, 10)
 }
 
